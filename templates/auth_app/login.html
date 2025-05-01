@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% block title %}{% trans "Вход в SIEM" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center min-vh-100 bg-light">
+  <div class="text-center p-4 rounded shadow" style="width: 90%; max-width: 400px; background: #fff;">
+    <!-- Логотип -->
+    <img src="{% static 'images/lumen_logo.png' %}"
+         alt="{% trans 'Логотип SIEM' %}"
+         class="mb-3"
+         style="width: 20vw; max-width: 20vw;">
+
+    <!-- Заголовок -->
+    <h2 class="mb-4">{% trans "Вход в систему SIEM" %}</h2>
+
+    <!-- Форма входа -->
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if form.errors %}
+        <div class="alert alert-danger mb-3">{% trans "Неправильный логин или пароль." %}</div>
+      {% endif %}
+
+      <div class="mb-3 text-start">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+      </div>
+      <div class="mb-3 text-start">
+        {{ form.password.label_tag }}
+        {{ form.password }}
+      </div>
+
+      <button type="submit" class="btn btn-siem w-100">{% trans "Войти" %}</button>
+    </form>
+
+    <!-- Селектор языка под кнопкой -->
+    <div class="dropdown mt-3" id="languageSelector">
+      <button class="btn p-2 bg-light border-0" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      {% if LANGUAGE_CODE == 'ru' %}
+        <img src="{% static 'images/flags/ru.png' %}" alt="RU" width="24">
+      {% else %}
+        <img src="{% static 'images/flags/gb.png' %}" alt="EN" width="24">
+      {% endif %}
+    </button>
+      <ul class="dropdown-menu text-start" aria-labelledby="languageDropdown">
+        <li>
+          <a class="dropdown-item d-flex align-items-center" href="#" onclick="event.preventDefault(); document.getElementById('lang-ru').submit();">
+            <img src="{% static 'images/flags/ru.png' %}" alt="RU" width="20" class="me-2">{% trans "Русский" %}
+          </a>
+          <form id="lang-ru" action="{% url 'set_language' %}" method="post" class="d-none">
+            {% csrf_token %}
+            <input name="language" type="hidden" value="ru">
+            <input name="next" type="hidden" value="{{ request.get_full_path }}">
+          </form>
+        </li>
+        <li>
+          <a class="dropdown-item d-flex align-items-center" href="#" onclick="event.preventDefault(); document.getElementById('lang-en').submit();">
+            <img src="{% static 'images/flags/gb.png' %}" alt="EN" width="20" class="me-2">English
+          </a>
+          <form id="lang-en" action="{% url 'set_language' %}" method="post" class="d-none">
+            {% csrf_token %}
+            <input name="language" type="hidden" value="en">
+            <input name="next" type="hidden" value="{{ request.get_full_path }}">
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

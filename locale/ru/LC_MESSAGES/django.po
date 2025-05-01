@@ -1,0 +1,48 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: SIEM Project 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-05-01 12:00+0000\n"
+"PO-Revision-Date: 2025-05-01 12:00+0000\n"
+"Last-Translator: Your Name <you@example.com>\n"
+"Language-Team: Russian <ru@example.com>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Здесь msgid и msgstr совпадают, поскольку оригинал уже на русском.
+
+#. title
+msgid "SIEM"
+msgstr "SIEM"
+
+#. login heading
+msgid "Вход в систему SIEM"
+msgstr "Вход в систему SIEM"
+
+#. username label
+msgid "Имя пользователя"
+msgstr "Имя пользователя"
+
+#. password label
+msgid "Пароль"
+msgstr "Пароль"
+
+#. error message
+msgid "Неправильный логин или пароль."
+msgstr "Неправильный логин или пароль."
+
+#. submit button
+msgid "Войти"
+msgstr "Войти"
+
+#. logo alt
+msgid "Логотип SIEM"
+msgstr "Логотип SIEM"
