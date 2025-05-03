@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Удалить сервис" %}{% endblock %}
+{% block content %}
+<div class="container p-4" style="max-width: 600px;">
+  <h2>{% trans "Удалить сервис" %}</h2>
+  <p>{% blocktrans %}Вы уверены, что хотите удалить сервис "{{ object.name }}"?{% endblocktrans %}</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">{% trans "Удалить" %}</button>
+    <a href="{% url 'services' %}" class="btn btn-outline-secondary ms-2">{% trans "Отмена" %}</a>
+  </form>
+</div>
+{% endblock %}

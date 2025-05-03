@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+{% block title %}{% trans "Сервисы" %}{% endblock %}
+{% block content %}
+<div class="container-fluid p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{% trans "Сервисы" %}</h1>
+    <div>
+      <form class="d-inline-block" method="get">
+        <input name="filter" value="{{ request.GET.filter }}" class="form-control d-inline-block" style="width: 200px;" placeholder="{% trans 'Фильтр' %}">
+      </form>
+      <a href="{% url 'service_add' %}" class="btn btn-siem ms-2">{% trans "Добавить" %}</a>
+      <a href="{% url 'services' %}" class="btn btn-outline-secondary ms-1">{% trans "Обновить" %}</a>
+      <a href="{% url 'services' %}" class="btn btn-outline-danger ms-1" onclick="return confirm('{% trans "Удалить выбранные?" %}');">{% trans "Удалить" %}</a>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered">
+      <thead class="table-light">
+        <tr>
+          <th>{% trans "Название" %}</th>
+          <th>{% trans "Hostname" %}</th>
+          <th>{% trans "Адрес" %}</th>
+          <th>{% trans "Порт" %}</th>
+          <th>{% trans "Статус" %}</th>
+          <th>{% trans "Действия" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for svc in services %}
+        <tr>
+          <td>{{ svc.name }}</td>
+          <td>{{ svc.hostname }}</td>
+          <td>{{ svc.address }}</td>
+          <td>{{ svc.port }}</td>
+          <td>
+            <span class="badge {% if svc.status == 'OK' %}bg-success{% else %}bg-secondary{% endif %}">{{ svc.status }}</span>
+          </td>
+          <td>
+            <a href="{% url 'service_edit' svc.pk %}" class="btn btn-sm btn-outline-primary">{% trans "Изменить" %}</a>
+            <a href="{% url 'service_delete' svc.pk %}" class="btn btn-sm btn-outline-danger">{% trans "Удалить" %}</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center">{% trans "Нет доступных сервисов" %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'pagination.html' with page_obj=services %}
+</div>
+{% endblock %}

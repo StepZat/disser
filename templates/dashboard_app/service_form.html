@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Форма сервиса" %}{% endblock %}
+{% block content %}
+<div class="container p-4" style="max-width: 600px;">
+  <h2>{% trans "Сервис" %}</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="mb-3">
+        {{ field.label_tag }}
+        {{ field }}
+        {{ field.errors }}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-siem">{% trans "Сохранить" %}</button>
+    <a href="{% url 'services' %}" class="btn btn-outline-secondary ms-2">{% trans "Отмена" %}</a>
+  </form>
+</div>
+{% endblock %}
