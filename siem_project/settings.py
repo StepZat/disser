@@ -13,10 +13,19 @@ import os
 
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+dotenv_path = BASE_DIR / '.env'
+if dotenv_path.exists():
+    load_dotenv(dotenv_path)
 
+# Теперь можно получать переменные
+LOGS_API_HOST = os.environ.get('LOGS_API_HOST', 'localhost')
+LOGS_API_PORT = os.environ.get('LOGS_API_PORT', '8081')
+LOGS_API_SCHEME = os.environ.get('LOGS_API_SCHEME', 'http')
+LOGS_API_PATH = os.environ.get('LOGS_API_PATH', '/logs')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -40,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'auth_app',
+    'dashboard_app',
 ]
 
 MIDDLEWARE = [
@@ -141,3 +151,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Время жизни сессии: 600 секунд = 10 минут
+SESSION_COOKIE_AGE = 600  # 10 минут
+# Обновлять время жизни сессии при каждом запросе
+SESSION_SAVE_EVERY_REQUEST = True
+# Опционально: удалять куки при закрытии браузера
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# URL перенаправления для неавторизованных пользователей
+LOGIN_URL = 'login'

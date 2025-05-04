@@ -1,21 +1,53 @@
 {% extends 'base.html' %}
 {% load i18n %}
+
 {% block title %}{% trans "Форма сервиса" %}{% endblock %}
 {% block content %}
-<div class="container p-4" style="max-width: 600px;">
+<div class="container p-4" style="max-width:600px;">
   <h2>{% trans "Сервис" %}</h2>
   <form method="post" novalidate>
     {% csrf_token %}
     {{ form.non_field_errors }}
+
+    <!-- Остальные поля -->
     {% for field in form %}
-      <div class="mb-3">
-        {{ field.label_tag }}
-        {{ field }}
-        {{ field.errors }}
-      </div>
+      {% if field.name in "name hostname address port" %}
+        <div class="mb-3">
+          {{ field.label_tag }}
+          {{ field }}
+          {{ field.errors }}
+        </div>
+      {% endif %}
     {% endfor %}
+
+    <!-- Новый чекбокс -->
+    <div class="form-check mb-3">
+      {{ form.enable_monitoring }}
+      {{ form.enable_monitoring.label_tag }}
+      {{ form.enable_monitoring.errors }}
+    </div>
+
+    <!-- Выпадающий список ролей -->
+    <div class="mb-3" id="role-field" style="display: none;">
+      {{ form.role.label_tag }}
+      {{ form.role }}
+      {{ form.role.errors }}
+    </div>
+
     <button type="submit" class="btn btn-siem">{% trans "Сохранить" %}</button>
     <a href="{% url 'services' %}" class="btn btn-outline-secondary ms-2">{% trans "Отмена" %}</a>
   </form>
 </div>
+
+<script>
+  // показываем/скрываем select роли по чекбоксу
+  const chk = document.getElementById('id_enable_monitoring');
+  const roleDiv = document.getElementById('role-field');
+  function toggleRole() {
+    roleDiv.style.display = chk.checked ? '' : 'none';
+  }
+  chk.addEventListener('change', toggleRole);
+  // инициализируем при загрузке
+  toggleRole();
+</script>
 {% endblock %}

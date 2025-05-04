@@ -1,36 +1,125 @@
-{% load static %}
-{% load i18n %}
-<!DOCTYPE html>
+{% load static i18n %}
 {% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>
-    {% block title %}{% trans "SIEM" %}{% endblock %}
-  </title>
+  <title>{% block title %}{% trans "LUMEN" %}{% endblock %}</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+  <style>
+    /* Увеличенный жирный значок гамбургера */
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml;charset=UTF8,<svg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'><path stroke='rgba(255,255,255,1)' stroke-width='4' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/></svg>");
+    }
+    /* Широкие блоки меню в sidebar */
+    .offcanvas-body .nav-link {
+      display: block;
+      width: 100%;
+      padding: 20px 20px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      color: #333;
+      min-height: 60px;
+    }
+    /* Тёмное затемнение при наведении */
+    .offcanvas-body .nav-link:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
-  <!-- Селектор языка (пример) -->
-  {% block language_selector %}{% endblock %}
+  <!-- Header -->
+  <header class="d-flex align-items-center justify-content-between px-4" style="height: 60px; background-color: #0d3b66;">
+    <!-- Левый блок: гамбургер и логотип -->
+    <div class="d-flex align-items-center">
+      <!-- Кнопка-гамбургер для открытия сайдбара -->
+      <button class="navbar-toggler navbar-dark border-0 me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <img src="{% static 'images/lumen_logo.png' %}" alt="LUMEN Logo" style="height: 40px;" class="me-2">
+      <span class="text-white h5 mb-0">LUMEN</span>
+    </div>
 
-  {% block content %}{% endblock %}
+    <!-- Правый блок: переключатель языка и выход -->
+    <div class="d-flex align-items-center">
+      <div class="dropdown me-3" id="languageSelector">
+        <button class="btn p-2 bg-transparent border-0" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          {% if LANGUAGE_CODE == 'ru' %}
+            <img src="{% static 'images/flags/ru.png' %}" alt="RU" width="24">
+          {% else %}
+            <img src="{% static 'images/flags/gb.png' %}" alt="EN" width="24">
+          {% endif %}
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="languageDropdown" style="left: auto; right: 0;">
+          <li>
+            <a class="dropdown-item d-flex align-items-center" href="#" onclick="event.preventDefault(); document.getElementById('lang-ru').submit();">
+              <img src="{% static 'images/flags/ru.png' %}" alt="RU" width="20" class="me-2">{% trans "Русский" %}
+            </a>
+            <form id="lang-ru" action="{% url 'set_language' %}" method="post" class="d-none">
+              {% csrf_token %}
+              <input name="language" type="hidden" value="ru">
+              <input name="next" type="hidden" value="{{ request.get_full_path }}">
+            </form>
+          </li>
+          <li>
+            <a class="dropdown-item d-flex align-items-center" href="#" onclick="event.preventDefault(); document.getElementById('lang-en').submit();">
+              <img src="{% static 'images/flags/gb.png' %}" alt="EN" width="20" class="me-2">English
+            </a>
+            <form id="lang-en" action="{% url 'set_language' %}" method="post" class="d-none">
+              {% csrf_token %}
+              <input name="language" type="hidden" value="en">
+              <input name="next" type="hidden" value="{{ request.get_full_path }}">
+            </form>
+          </li>
+        </ul>
+      </div>
+      <form action="{% url 'logout' %}" method="post" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-light">{% trans "Выход" %}</button>
+      </form>
+    </div>
+  </header>
 
+  <!-- Sidebar Offcanvas -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" style="width: 260px;">
+  <div class="offcanvas-header" style="background-color: #0d3b66;">
+    <h5 class="offcanvas-title text-white" id="sidebarLabel">{% trans "Меню" %}</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="{% trans 'Закрыть' %}"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    <nav class="nav flex-column">
+      <a class="nav-link d-flex align-items-center px-4 py-2" href="{% url 'dashboard' %}">
+        <i class="material-icons md-24 me-3">dashboard</i>
+        {% trans "Дашборды" %}
+      </a>
+      <a class="nav-link d-flex align-items-center px-4 py-2" href="{% url 'system' %}">
+        <i class="material-icons md-24 me-3">settings</i>
+        {% trans "Система" %}
+      </a>
+      <a class="nav-link d-flex align-items-center px-4 py-2" href="{% url 'services' %}">
+        <i class="material-icons md-24 me-3">build</i>
+        {% trans "Сервисы" %}
+      </a>
+      <a class="nav-link d-flex align-items-center px-4 py-2" href="#">
+        <i class="material-icons md-24 me-3">event</i>
+        {% trans "События" %}
+      </a>
+    </nav>
+  </div>
+</div>
+
+<!-- Основной контент -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
-<nav class="navbar navbar-light bg-light">
-  <form action="{% url 'set_language' %}" method="post" class="d-flex justify-content-end p-2">
-    {% csrf_token %}
-    <button type="submit" name="language" value="ru" class="btn btn-link p-0 me-2">
-      <img src="{% static 'images/flags/ru.png' %}" alt="RU" width="24">
-    </button>
-    <button type="submit" name="language" value="en" class="btn btn-link p-0">
-      <img src="{% static 'images/flags/gb.png' %}" alt="EN" width="24">
-    </button>
-  </form>
-</nav>
 </html>

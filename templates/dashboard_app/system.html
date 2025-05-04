@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Система" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+  <style>
+    /* Простое управление панелями через CSS */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+  </style>
+
+  <!-- Навигационные табы -->
+  <ul class="nav nav-tabs" id="systemTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="services-tab"
+              type="button"
+              data-target="services-pane">
+        {% trans "Сервисы" %}
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="hosts-tab"
+              type="button"
+              data-target="hosts-pane">
+        {% trans "Хосты" %}
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="notifications-tab"
+              type="button"
+              data-target="notifications-pane">
+        {% trans "Уведомления" %}
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="about-tab"
+              type="button"
+              data-target="about-pane">
+        {% trans "О системе" %}
+      </button>
+    </li>
+  </ul>
+
+  <div class="mt-3">
+    <!-- Сервисы -->
+    <div class="tab-panel active" id="services-pane">
+      <h4>{% trans "Сервисы" %}</h4>
+      <!-- TODO: вставить содержимое сервисов -->
+    </div>
+
+    <!-- Хосты -->
+    <div class="tab-panel" id="hosts-pane">
+      <h4>{% trans "Хосты" %}</h4>
+      <!-- TODO: вставить содержимое хостов -->
+    </div>
+
+    <!-- Уведомления -->
+    <div class="tab-panel" id="notifications-pane">
+      <h4>{% trans "Уведомления" %}</h4>
+      <!-- TODO: вставить содержимое уведомлений -->
+    </div>
+
+    <!-- О системе -->
+    <div class="tab-panel" id="about-pane">
+      <h4>{% trans "О системе" %}</h4>
+      <p>{% trans "Информация о версии, авторах, лицензии и т.д." %}</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const tabs = document.querySelectorAll('#systemTabs .nav-link');
+  const panes = document.querySelectorAll('.tab-panel');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Обновляем класс active на табах
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const target = tab.getAttribute('data-target');
+      // Показать только нужную панель
+      panes.forEach(pane => {
+        if (pane.id === target) {
+          pane.classList.add('active');
+        } else {
+          pane.classList.remove('active');
+        }
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,3 +1,8 @@
+import asyncio
+
+from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.views import View
 from django.views.generic import TemplateView
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
@@ -55,6 +60,43 @@ class ServiceListView(LoginRequiredMixin, ListView):
             qs = qs.filter(name__icontains=term)
         return qs
 
+    def post(self, request, *args, **kwargs):
+        # Собираем все выбранные ID из чекбоксов
+        ids = request.POST.getlist('selected_pk')
+        if ids:
+            Service.objects.filter(pk__in=ids).delete()
+        return redirect('services')
+
+    def get_context_data(self, **kwargs):
+        context  = super().get_context_data(**kwargs)
+        services = list(context['services'])
+
+        async def check_service(svc):
+            try:
+                # пытаемся TCP-соединение
+                r, w = await asyncio.wait_for(
+                    asyncio.open_connection(svc.address, svc.port),
+                    timeout=3
+                )
+                w.close(); await w.wait_closed()
+                return True
+            except:
+                return False
+
+        async def monitor_all(svcs):
+            return await asyncio.gather(*(check_service(s) for s in svcs))
+
+        # запускаем весь мониторинг
+        statuses = asyncio.run(monitor_all(services))
+        print("[DEBUG] Service statuses:", [(svc.address, svc.port, up) for svc, up in zip(services, statuses)])
+
+        # прикрепляем динамический атрибут
+        for svc, is_up in zip(services, statuses):
+            svc.is_up = is_up
+
+        context['services'] = services
+        return context
+
 class ServiceCreateView(LoginRequiredMixin, CreateView):
     model = Service
     form_class = ServiceForm
@@ -71,3 +113,24 @@ class ServiceDeleteView(LoginRequiredMixin, DeleteView):
     model = Service
     template_name = 'dashboard_app/service_confirm_delete.html'
     success_url = reverse_lazy('services')
+
+class ServiceStatusAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        # Берём все сервисы из БД
+        services = Service.objects.all()
+        data = []
+        # Синхронная проверка через socket вместо asyncio
+        import socket
+        for svc in services:
+            is_up = False
+            try:
+                with socket.create_connection((svc.address, svc.port), timeout=3):
+                    is_up = True
+            except Exception:
+                is_up = False
+            data.append({'pk': svc.pk, 'is_up': is_up})
+        return JsonResponse(data, safe=False)
+
+
+class SystemView(LoginRequiredMixin, TemplateView):
+    template_name = 'dashboard_app/system.html'

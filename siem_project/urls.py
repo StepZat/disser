@@ -26,4 +26,5 @@ urlpatterns = [
 urlpatterns += i18n_patterns(
     path('admin/', admin.site.urls),
     path('', include('auth_app.urls')),
+    path('', include('dashboard_app.urls')),
 )

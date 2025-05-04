@@ -32,3 +32,44 @@
   background-color: inherit !important;
   border: none !important;
 }
+
+/* Позволяет менять ширину заголовков */
+.resizable {
+  resize: horizontal;
+  overflow: auto;
+  white-space: nowrap;
+}
+
+/* Стили для лейблов логов */
+.badge.bg-info { background-color: #17a2b8 !important; }
+.badge.bg-warning { background-color: #ffc107 !important; color: #212529 !important; }
+.badge.bg-danger { background-color: #dc3545 !important; }
+
+.level-error {
+  background-color: #dc3545; /* красный */
+  color: #000 !important;
+  padding: 0.25em 0.5em;
+  border-radius: 0.25rem;
+  display: inline-block;
+}
+.level-warning {
+  background-color: #fd7e14; /* оранжевый */
+  color: #000 !important;
+  padding: 0.25em 0.5em;
+  border-radius: 0.25rem;
+  display: inline-block;
+}
+.level-info {
+  background-color: #f8f9fa; /* светло-серый */
+  color: #000 !important;
+  padding: 0.25em 0.5em;
+  border-radius: 0.25rem;
+  display: inline-block;
+}
+
+.table-responsive thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa; /* Цвет фона шапки */
+  z-index: 5;
+}
