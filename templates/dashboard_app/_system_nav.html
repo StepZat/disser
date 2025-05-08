@@ -1,0 +1,20 @@
+{% load i18n %}
+
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <a class="nav-link {% if active == 'services' %}active{% endif %}"
+       href="{% url 'system-services' %}">{% trans "Сервисы" %}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active == 'hosts' %}active{% endif %}"
+       href="{% url 'system-hosts' %}">{% trans "Хосты" %}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active == 'notifications' %}active{% endif %}"
+       href="{% url 'system-notifications' %}">{% trans "Уведомления" %}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active == 'about' %}active{% endif %}"
+       href="{% url 'system-about' %}">{% trans "О системе" %}</a>
+  </li>
+</ul>

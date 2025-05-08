@@ -1,72 +1,65 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load static i18n %}
 
 {% block title %}{% trans "Система" %}{% endblock %}
 
+{% block extra_css %}
+<link href="{% static 'css/notifications.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid p-4">
-  <style>
-    /* Простое управление панелями через CSS */
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-  </style>
-
-  <!-- Навигационные табы -->
-  <ul class="nav nav-tabs" id="systemTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="services-tab"
-              type="button"
-              data-target="services-pane">
-        {% trans "Сервисы" %}
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="hosts-tab"
-              type="button"
-              data-target="hosts-pane">
-        {% trans "Хосты" %}
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="notifications-tab"
-              type="button"
-              data-target="notifications-pane">
-        {% trans "Уведомления" %}
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="about-tab"
-              type="button"
-              data-target="about-pane">
-        {% trans "О системе" %}
-      </button>
-    </li>
-  </ul>
-
-  <div class="mt-3">
-    <!-- Сервисы -->
-    <div class="tab-panel active" id="services-pane">
-      <h4>{% trans "Сервисы" %}</h4>
-      <!-- TODO: вставить содержимое сервисов -->
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
     </div>
+  {% endif %}
 
-    <!-- Хосты -->
-    <div class="tab-panel" id="hosts-pane">
-      <h4>{% trans "Хосты" %}</h4>
-      <!-- TODO: вставить содержимое хостов -->
-    </div>
-
-    <!-- Уведомления -->
-    <div class="tab-panel" id="notifications-pane">
-      <h4>{% trans "Уведомления" %}</h4>
-      <!-- TODO: вставить содержимое уведомлений -->
-    </div>
-
-    <!-- О системе -->
-    <div class="tab-panel" id="about-pane">
-      <h4>{% trans "О системе" %}</h4>
-      <p>{% trans "Информация о версии, авторах, лицензии и т.д." %}</p>
-    </div>
+  <!-- Сервисы -->
+  <div class="tab-panel active" id="services-pane">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        {% include 'dashboard_app/_system_nav.html' with active='services' %}
+        <h4>{% trans "Сервисы" %}</h4>
+        <button class="btn btn-outline-primary" onclick="location.reload()">
+          {% trans "Обновить" %}
+        </button>
+      </div>
+      <table class="table table-striped table-hover">
+        <thead>
+          <tr>
+            <th>{% trans "Имя сервиса" %}</th>
+            <th>{% trans "Hostname" %}</th>
+            <th>{% trans "IP" %}</th>
+            <th>{% trans "Port" %}</th>
+            <th>{% trans "Статус" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for srv in services %}
+            <tr>
+              <td>{{ srv.name }}</td>
+              <td>{{ srv.hostname }}</td>
+              <td>{{ srv.ip }}</td>
+              <td>{{ srv.port }}</td>
+              <td>
+                {% if srv.is_up %}
+                  <span class="badge bg-success">{% trans "Up" %}</span>
+                {% else %}
+                  <span class="badge bg-danger">{% trans "Down" %}</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted">
+                {% trans "Не найдено ни одного сервиса" %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
   </div>
 </div>
 
@@ -74,22 +67,12 @@
 (function() {
   const tabs = document.querySelectorAll('#systemTabs .nav-link');
   const panes = document.querySelectorAll('.tab-panel');
-
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      // Обновляем класс active на табах
       tabs.forEach(t => t.classList.remove('active'));
+      panes.forEach(p => p.classList.add('d-none'));
       tab.classList.add('active');
-
-      const target = tab.getAttribute('data-target');
-      // Показать только нужную панель
-      panes.forEach(pane => {
-        if (pane.id === target) {
-          pane.classList.add('active');
-        } else {
-          pane.classList.remove('active');
-        }
-      });
+      document.getElementById(tab.getAttribute('data-target')).classList.remove('d-none');
     });
   });
 })();

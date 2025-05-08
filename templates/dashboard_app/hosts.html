@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<div class="container-fluid p-4">
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% include 'dashboard_app/_system_nav.html' with active='hosts' %}
+  <div class="tab-panel d-none" id="hosts-pane">
+    <!-- ... ваш существующий код хостов ... -->
+  </div>
+</div>
+<script>
+(function() {
+  const tabs = document.querySelectorAll('#systemTabs .nav-link');
+  const panes = document.querySelectorAll('.tab-panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      panes.forEach(p => p.classList.add('d-none'));
+      tab.classList.add('active');
+      document.getElementById(tab.getAttribute('data-target')).classList.remove('d-none');
+    });
+  });
+})();
+</script>
+{% endblock %}

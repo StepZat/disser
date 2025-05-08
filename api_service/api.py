@@ -8,8 +8,8 @@ from bson import ObjectId
 import motor.motor_asyncio
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("uvicorn.error")
+#logging.basicConfig(level=logging.INFO)
+#logger = logging.getLogger("uvicorn.error")
 
 # MongoDB connection
 title = "MongoDB connection"

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container-fluid p-4">
+  {% include 'dashboard_app/_system_nav.html' with active='about' %}
+  <h4>{% trans "О системе" %}</h4>
+  <p>{% trans "Информация о версии, авторах, лицензии и т.д." %}</p>
+</div>
+{% endblock %}
