@@ -18,5 +18,4 @@ urlpatterns = [
     path('system/notifications/',NotificationsView.as_view(), name='system-notifications'),
     path('system/about/',AboutView.as_view(),       name='system-about'),
     path('system/notifications/test/', notifications_test, name='system-notifications-test'),
-
 ]

@@ -35,4 +35,19 @@ class ServiceForm(forms.ModelForm):
 class HostForm(forms.ModelForm):
     class Meta:
         model = Host
-        fields = ["name", "address"]
+        fields = ['name', 'address']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Имя хоста'),
+                # id будет «id_name» автоматически
+            }),
+            'address': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('IP или hostname'),
+            }),
+        }
+        labels = {
+            'name': _('Имя'),
+            'address': _('Адрес'),
+        }

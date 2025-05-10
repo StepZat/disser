@@ -2,25 +2,27 @@ import asyncio
 import json
 import logging
 import socket
+from datetime import datetime, timedelta
 from logging import INFO
 from pathlib import Path
 
 from django.core.cache import cache
 from django.http import JsonResponse, HttpResponseBadRequest
+from django.utils import timezone
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from dotenv import dotenv_values
 
 from siem_project import settings
-from .models import Service
-from .forms import ServiceForm
+from .models import Service, Host
+from .forms import ServiceForm, HostForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 import  requests
 from django.conf import settings
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils.translation import gettext as _
 from .monitor import monitor_services, EnvService
@@ -339,6 +341,95 @@ class NotificationsView(TemplateView):
 class HostListView(TemplateView):
     template_name = 'dashboard_app/hosts.html'
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        hosts = Host.objects.all()
+        ctx['hosts']     = hosts
+        ctx['host_form'] = HostForm()
+
+        # 1) текущий хост
+        sel = self.request.GET.get('host')
+        ctx['current_host'] = (
+            hosts.filter(pk=sel).first()
+            if sel else
+            (hosts.first() if hosts.exists() else None)
+        )
+
+        # 2) парсим start/end из GET или задаём по-умолчанию последние час
+        fmt = '%Y-%m-%dT%H:%M'
+        now = timezone.localtime()
+        # начало
+        start_str = self.request.GET.get('start')
+        try:
+            start_dt = datetime.strptime(start_str, fmt) if start_str else now - timedelta(hours=1)
+            start_dt = timezone.make_aware(start_dt, timezone.get_current_timezone())
+        except Exception:
+            start_dt = now - timedelta(hours=1)
+            start_str = start_dt.strftime(fmt)
+        # конец
+        end_str = self.request.GET.get('end')
+        try:
+            end_dt = datetime.strptime(end_str, fmt) if end_str else now
+            end_dt = timezone.make_aware(end_dt, timezone.get_current_timezone())
+        except Exception:
+            end_dt = now
+            end_str = end_dt.strftime(fmt)
+
+        # epoch в миллисекундах
+        ctx['from_ts'] = int(start_dt.timestamp() * 1000)
+        ctx['to_ts']   = int(end_dt.timestamp()   * 1000)
+        # для заполнения формы
+        ctx['start_str'] = start_str or start_dt.strftime(fmt)
+        ctx['end_str']   = end_str   or end_dt.strftime(fmt)
+
+        # 3) грузим JSON-дэшборд и группы панелей
+        path = Path(settings.BASE_DIR) / 'grafana' / 'provisioning' / 'dashboards' /'1860_rev34.json'
+        with path.open(encoding='utf-8') as fp:
+            dash = json.load(fp)
+
+        groups = []
+        current = None
+        for p in dash.get('panels', []):
+            if p.get('type') == 'row':
+                if current:
+                    groups.append(current)
+                current = {
+                    'title': p.get('title', 'Без названия'),
+                    'panels': [c for c in p.get('panels', []) if c.get('id') is not None]
+                }
+            else:
+                # старый формат: некоторые панели могут быть на верхнем уровне
+                if current and p.get('id') is not None:
+                    current['panels'].append(p)
+        if current:
+            groups.append(current)
+
+        ctx['dashboard_groups'] = groups
+        ctx['grafana_base']    = settings.GRAFANA_BASE.rstrip('/')
+        ctx['dashboard_uid']   = dash.get('uid') or dash.get('id')
+        ctx['time_zone']       = settings.TIME_ZONE
+        ping_statuses = cache.get('hosts_ping_statuses', {})
+        # добавим в каждый объект хоста атрибуты, чтобы шаблон мог их вывести
+        for h in ctx['hosts']:
+            st = ping_statuses.get(h.pk, {})
+            h.ping_up = st.get('up')
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        # Добавить хост
+        if 'add_host' in request.POST:
+            form = HostForm(request.POST)
+            if form.is_valid():
+                form.save()
+            return redirect(f"{request.path}?host=")
+
+        # Удалить хост
+        if 'delete_host' in request.POST:
+            Host.objects.filter(pk=request.POST['delete_host']).delete()
+            return redirect(f"{request.path}?host=")
+
+        return super().get(request, *args, **kwargs)
+
 class AboutView(TemplateView):
     template_name = 'dashboard_app/about.html'
 
@@ -383,3 +474,40 @@ def notifications_test(request):
     logger.debug("notifications_test: response %s %r", resp.status_code, resp.text)
 
     return JsonResponse({}, status=(200 if resp.ok else resp.status_code))
+
+DASHBOARD_JSON_PATH = settings.BASE_DIR / "dashboard_app" / "static" / "dashboards" / "1860_rev40.json"
+
+def hosts_view(request):
+    # добавление нового хоста
+    if request.method == "POST" and "add_host" in request.POST:
+        form = HostForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse("hosts"))
+    else:
+        form = HostForm()
+
+    # удаление
+    if request.method == "POST" and "delete_host" in request.POST:
+        h = get_object_or_404(Host, pk=request.POST.get("delete_host"))
+        h.delete()
+        return redirect(reverse("hosts"))
+
+    # выбор текущего хоста
+    hosts = Host.objects.all()
+    sel = request.GET.get("host")
+    current = hosts.filter(pk=sel).first() if sel else None
+
+    # загрузим JSON дашборда и вытянем список panelId
+    with open(DASHBOARD_JSON_PATH, encoding="utf-8") as f:
+        dash = json.load(f)
+    panel_ids = [p["id"] for p in dash["panels"] if p.get("type") != "row"]
+
+    return render(request, "dashboard_app/hosts.html", {
+        "hosts": hosts,
+        "form": form,
+        "current": current,
+        "panel_ids": panel_ids,
+        # ваша базовая ссылка на Grafana (замените на свою)
+        "grafana_base": "http://127.0.0.1:3000/d-solo/1860/node-exporter-full?orgId=1",
+    })

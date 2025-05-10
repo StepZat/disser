@@ -52,6 +52,10 @@ class Service(models.Model):
 class Host(models.Model):
     name    = models.CharField("Имя", max_length=100, unique=True)
     address = models.CharField("Адрес (IP или hostname)", max_length=100)
+    is_up        = models.BooleanField(
+        null=True, blank=True,
+        verbose_name="Доступен (ping)"
+    )
 
     def __str__(self):
         return self.name

@@ -1,0 +1,8 @@
+[
+  {
+    "labels": { "job": "node_exporter" },
+    "targets": [
+      "192.168.2.53:9100"
+    ]
+  }
+]

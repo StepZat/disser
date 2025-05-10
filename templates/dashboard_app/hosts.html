@@ -1,5 +1,12 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load static i18n %}
+
+{% block extra_css %}
+  <link href="{% static 'css/hosts.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block title %}{% trans "Хосты" %}{% endblock %}
+
 {% block content %}
 <div class="container-fluid p-4">
   {% if messages %}
@@ -9,11 +16,182 @@
       {% endfor %}
     </div>
   {% endif %}
+
   {% include 'dashboard_app/_system_nav.html' with active='hosts' %}
-  <div class="tab-panel d-none" id="hosts-pane">
-    <!-- ... ваш существующий код хостов ... -->
+
+  <div class="tab-panel active" id="hosts-pane">
+
+    <!-- Карточка «Добавить хост» -->
+    <div class="card hosts-add-card mb-4">
+      <div class="card-header bg-primary text-white">
+        {% trans "Добавить хост" %}
+      </div>
+      <div class="card-body">
+        <form method="post" class="row g-3 align-items-center">
+          {% csrf_token %}
+          <div class="col-auto">
+            {{ host_form.name.label_tag}}
+          </div>
+          <div class="col-auto">
+            {{ host_form.name }}
+          </div>
+          <div class="col-auto">
+            {{ host_form.address.label_tag}}
+          </div>
+          <div class="col-auto">
+            {{ host_form.address }}
+          </div>
+          <div class="col-auto">
+            <button type="submit" name="add_host" class="btn btn-primary">
+              {% trans "Добавить хост" %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Карточка «Список хостов» -->
+    <div class="card hosts-table-card mb-4">
+      <div class="card-header bg-primary text-white">
+        {% trans "Список хостов" %}
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>{% trans "Имя" %}</th>
+              <th>{% trans "Адрес" %}</th>
+              <th>{% trans "Статус" %}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in hosts %}
+              <tr>
+                <td>{{ h.name }}</td>
+                <td>{{ h.address }}</td>
+                <td>
+                  {% if h.ping_up %}
+                  <span class="badge bg-success">{% trans "Up" %}</span>
+                  {% elif h.ping_up is False %}
+                  <span class="badge bg-danger">{% trans "Down" %}</span>
+                  {% else %}
+                  <span class="text-muted">{% trans "—" %}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button
+                      name="delete_host"
+                      value="{{ h.pk }}"
+                      class="btn btn-sm btn-outline-danger"
+                      aria-label="{% trans 'Удалить хост' %}">
+                      &times;
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">
+                  {% trans "Нет хостов" %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Выбор хоста для дашборда -->
+<form method="get" class="row g-3 align-items-end mb-4">
+      <div class="col-auto">
+        <label for="host-select" class="form-label">{% trans "Хост" %}</label>
+        <select id="host-select"
+                name="host"
+                onchange="this.form.submit()"
+                class="form-select">
+          <option value="">{% trans "— выберите —" %}</option>
+          {% for h in hosts %}
+            <option value="{{ h.pk }}"
+              {% if current_host and h.pk == current_host.pk %}selected{% endif %}>
+              {{ h.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <label for="start" class="form-label">{% trans "Начало" %}</label>
+        <input type="datetime-local"
+               id="start"
+               name="start"
+               value="{{ start_str }}"
+               class="form-control">
+      </div>
+      <div class="col-auto">
+        <label for="end" class="form-label">{% trans "Конец" %}</label>
+        <input type="datetime-local"
+               id="end"
+               name="end"
+               value="{{ end_str }}"
+               class="form-control">
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-siem">
+          {% trans "Применить" %}
+        </button>
+      </div>
+    </form>
+
+    {% if current_host and dashboard_groups %}
+      <div class="accordion" id="dashboardAccordion">
+        {% for group in dashboard_groups %}
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+              <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapse{{ forloop.counter }}"
+                      aria-expanded="{{ forloop.first|yesno:'true,false' }}"
+                      aria-controls="collapse{{ forloop.counter }}">
+                {{ group.title }}
+              </button>
+            </h2>
+            <div id="collapse{{ forloop.counter }}"
+                 class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                 aria-labelledby="heading{{ forloop.counter }}"
+                 data-bs-parent="#dashboardAccordion">
+              <div class="accordion-body">
+                <div class="row g-3">
+                  {% for panel in group.panels %}
+                    <div class="col-md-6 host-metric-card">
+                      <div class="card h-100">
+                        <div class="card-body p-0">
+                          <iframe
+                            loading="lazy"
+                            src="{{ grafana_base }}&panelId={{ panel.id }}&var-node={{ current_host.address }}:9100&from={{ from_ts }}&to={{ to_ts }}&timezone=browser&kiosk"
+                            width="100%"
+                            height="250"
+                            frameborder="0"
+                            scrolling="no">
+                          </iframe>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+
   </div>
 </div>
+
 <script>
 (function() {
   const tabs = document.querySelectorAll('#systemTabs .nav-link');

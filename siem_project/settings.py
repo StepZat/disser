@@ -13,6 +13,7 @@ import os
 
 from pathlib import Path
 
+from celery.schedules import crontab
 from django.conf.global_settings import LOGGING
 from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
@@ -122,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = os.getenv("TIME_ZONE", "UTC")
 
 # Включаем локализацию
 USE_I18N = True
@@ -199,6 +200,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'dashboard_app.tasks.monitor_all_services',
         'schedule': 60.0,  # в секундах
     },
+    'ping-hosts-every-minute': {
+        'task': 'dashboard_app.tasks.ping_all_hosts',
+        'schedule': crontab(minute='*/1'),
+    },
 }
 
 CACHES = {
@@ -207,3 +212,20 @@ CACHES = {
     'LOCATION': 'redis://127.0.0.1:6379/1',
   }
 }
+
+# 1) Основные константы (можно тоже через os.environ)
+GRAFANA_SCHEME = os.getenv("GRAFANA_SCHEME", "http")
+GRAFANA_HOST   = os.getenv("GRAFANA_HOST", "localhost")
+GRAFANA_PORT   = os.getenv("GRAFANA_PORT", "3000")
+
+# 2) Идентификаторы дашборда (UID и slug можно держать в env или фиксом)
+GRAFANA_DASHBOARD_UID  = os.getenv("GRAFANA_DASHBOARD_UID", "abcdef123")
+GRAFANA_DASHBOARD_SLUG = os.getenv("GRAFANA_DASHBOARD_SLUG", "my-node-exporter-full")
+GRAFANA_ORG_ID         = os.getenv("GRAFANA_ORG_ID", "1")
+
+GRAFANA_BASE = (
+    f"{GRAFANA_SCHEME}://{GRAFANA_HOST}:{GRAFANA_PORT}"
+    f"/d-solo/{GRAFANA_DASHBOARD_UID}/{GRAFANA_DASHBOARD_SLUG}"
+    f"?orgId={GRAFANA_ORG_ID}"
+)
+
