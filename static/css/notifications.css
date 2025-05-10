@@ -51,3 +51,17 @@
   background-color: #6c757d;
   color: #fff;
 }
+
+/* Notifications widget: выравнивание кнопки удаления получателя */
+.input-group .remove-recipient {
+  /* форм-контрол в Bootstrap 5 имеет высоту ~2.25rem + 2px бордеров */
+  height: calc(2.25rem + 2px);
+  /* точно такие же внутренние отступы, как у btn-sm */
+  padding: 0.375rem 0.75rem;
+  /* центрируем символ по вертикали */
+  display: flex;
+  align-items: center;
+  /* убираем лишние скругления слева */
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}

@@ -5,6 +5,7 @@ import socket
 from logging import INFO
 from pathlib import Path
 
+from django.core.cache import cache
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -22,6 +23,9 @@ from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils.translation import gettext as _
+from .monitor import monitor_services, EnvService
+from .utils import load_props
+
 logger = logging.getLogger(__name__)
 
 MS_BASE = getattr(settings, "NOTIF_SERVICE_URL", "http://localhost:8003/api")
@@ -30,7 +34,7 @@ KEYS_EMAIL = [
     "smtp_server", "smtp_port", "smtp_user",
     "smtp_password", "smtp_timeout", "smtp_security"
 ]
-KEYS_TG = ["telegram_token"]
+KEYS_TG = ["telegram_token", 'telegram_chat_id']
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard_app/dashboard.html'
@@ -88,35 +92,24 @@ class ServiceListView(LoginRequiredMixin, ListView):
             Service.objects.filter(pk__in=ids).delete()
         return redirect('services')
 
-    def get_context_data(self, **kwargs):
-        context  = super().get_context_data(**kwargs)
-        services = list(context['services'])
-
-        async def check_service(svc):
-            try:
-                # пытаемся TCP-соединение
-                r, w = await asyncio.wait_for(
-                    asyncio.open_connection(svc.address, svc.port),
-                    timeout=3
-                )
-                w.close(); await w.wait_closed()
-                return True
-            except:
-                return False
-
-        async def monitor_all(svcs):
-            return await asyncio.gather(*(check_service(s) for s in svcs))
-
-        # запускаем весь мониторинг
-        statuses = asyncio.run(monitor_all(services))
-        print("[DEBUG] Service statuses:", [(svc.address, svc.port, up) for svc, up in zip(services, statuses)])
-
-        # прикрепляем динамический атрибут
-        for svc, is_up in zip(services, statuses):
-            svc.is_up = is_up
-
-        context['services'] = services
-        return context
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     # получаем все модели Service
+    #     qs = Service.objects.all()
+    #     monitored = monitor_services(qs)
+    #     # приводим к списку словарей для шаблона
+    #     context['services'] = [
+    #          {
+    #             'name': item['svc'].name,
+    #             'hostname': item['svc'].hostname,
+    #             'address': item['svc'].address,
+    #             'port': item['svc'].port,
+    #             'is_up': item['is_up'],
+    #             'status': item['status'],
+    #          }
+    #         for item in monitored
+    #         ]
+    #     return context
 
 class ServiceCreateView(LoginRequiredMixin, CreateView):
     model = Service
@@ -152,6 +145,35 @@ class ServiceStatusAPIView(LoginRequiredMixin, View):
             data.append({'pk': svc.pk, 'is_up': is_up})
         return JsonResponse(data, safe=False)
 
+def send_status_change(svc, now_up):
+    """
+    Отправляет уведомление в зависимости от включённых каналов.
+    """
+    # 1) Получаем все свойства уведомлений
+    r = requests.get(f"{MS_BASE}/properties/", timeout=2, proxies={'http': None, 'https': None})
+    r.raise_for_status()
+    props = {p['key']: p['value'] for p in r.json()}
+
+    message = f"Сервис «{svc.name}» теперь {'UP' if now_up else 'DOWN'}."
+    # Email-канал
+    if props.get("email_enabled") == "true":
+        # список получателей CSV
+        recips = [e for e in props.get("email_recipients", "").split(",") if e]
+        for to in recips:
+            payload = {
+                "to_email": to,
+                "subject": f"[{svc.name}] статус изменился",
+                "body": message
+            }
+            requests.post(f"{MS_BASE}/notify/email/", json=payload, timeout=5)
+
+    # Telegram-канал
+    if props.get("telegram_enabled") == "true":
+        # Храните Chat ID в свойстве, например telegram_chat_id
+        chat_id = props.get("telegram_chat_id", "")
+        if chat_id:
+            payload = {"chat_id": chat_id, "message": message}
+            requests.post(f"{MS_BASE}/notify/telegram/", json=payload, timeout=5)
 
 def is_port_open(host: str, port: int, timeout: float = 1.0) -> bool:
     try:
@@ -170,60 +192,52 @@ def is_http_up(host: str, port: int, scheme: str = 'http', path: str = '/', time
         logger.debug(f"[DEBUG] {url} → {resp.status_code}")
         # считаем up только 2xx и 3xx
         if 200 <= resp.status_code < 400:
-            return True, str(resp.status_code)
+            return True
         else:
-            return False, str(resp.status_code)
+            return False
     except Exception as e:
         logger.debug(f"[DEBUG] {url} → exception: {e}")
         return False, str(e)
 
 class SystemView(TemplateView):
+    model = Service
     template_name = 'dashboard_app/system.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        # читаем .env
         env_path = Path(settings.BASE_DIR) / '.env'
         services = []
-
         if env_path.exists():
             config = dotenv_values(env_path)
-
-            # Собираем уникальные имена сервисов из SERVICE_NAME_*
-            seen = set()
-            names = [
-                val for key, val in config.items()
-                if key.startswith('SERVICE_NAME_') and val and val not in seen and not seen.add(val)
-            ]
-
-            for name in names:
-                prefix   = name.upper()
-                host     = config.get(f'{prefix}_HOST', '')
-                port_str = config.get(f'{prefix}_PORT', '')
-                hostname = config.get(f'{prefix}_HOSTNAME', '')
-                path     = config.get(f'{prefix}_PATH', '/')
-                proto    = config.get(f'{prefix}_PROTOCOL', 'tcp').lower()
-
-                # Приводим порт к целому
-                try:
-                    port = int(port_str)
-                except (TypeError, ValueError):
-                    port = None
-
-                # Выбираем, как пинговать
-                is_up = False
-                if host and port:
-                    if proto == 'http':
-                        is_up = is_http_up(host, port, 'http', path)
-                    else:
-                        is_up = is_port_open(host, port)
-
+            # чем-то вроде:
+            names = [v for k,v in config.items() if k.startswith('SERVICE_NAME_')]
+            for nm in names:
+                host = config.get(f'{nm}_HOST')
+                port = int(config.get(f'{nm}_PORT', 0) or 0)
+                protocol = config.get(f'{nm}_PROTOCOL', 'tcp').lower()
+                hostname = config.get(f'{nm}_HOSTNAME')
                 services.append({
-                    'name':     name,
+                    'name': nm,
                     'hostname': hostname,
-                    'ip':       host,
-                    'port':     port_str,
-                    'is_up':    is_up,
+                    'address': host,
+                    'port': port,
+                    'protocol': protocol,
+                    # для статуса иконки Up/Down можно не передавать,
+                    # т.к. мониторинг теперь в middleware
+                    'is_up': None,
+                    'status': None,
                 })
+        # 2) Подтягиваем последние сохранённые статусы
+        env_statuses = cache.get("env_service_statuses", {})
+        print(env_statuses)
+        # 3) Заполняем
+        for svc in services:
+            st = env_statuses.get(svc['name'])
+            print(st)
+            if st:
+                svc['is_up'] = st['is_up']
+                svc['status'] = st['status']
 
         ctx['services'] = services
         return ctx
@@ -234,10 +248,7 @@ class NotificationsView(TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         try:
-            r = requests.get(f"{MS_BASE}/properties/", timeout=3, proxies={'http': None, 'https': None})
-            import sys;print(r.json(), file=sys.stderr)
-            r.raise_for_status()
-            props = {p["key"]: p["value"] for p in r.json()}
+            props = load_props()
         except Exception:
             props = {}
 
@@ -246,6 +257,8 @@ class NotificationsView(TemplateView):
             ctx[key] = props.get(key, "")
         ctx["email_enabled"]    = props.get("email_enabled", "false")
         ctx["telegram_enabled"] = props.get("telegram_enabled", "false")
+        raw = props.get("email_recipients", "")
+        ctx["email_recipients"] = [e for e in raw.split(",") if e]
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -268,9 +281,17 @@ class NotificationsView(TemplateView):
                 resp = session.patch(f"{MS_BASE}/properties/{key}/", json={"value": val}, timeout=5)
                 if resp.status_code == 404:
                     resp = session.post(f"{MS_BASE}/properties/", json={"key":key,"value":val}, timeout=5)
-                if not resp.ok:
-                    errors.append(key)
+                if not errors:
+                    from django.core.cache import cache
+                    cache.delete("notif_props")
 
+            recips = request.POST.getlist("email_recipients[]")
+            recips_val = ",".join([r for r in recips if r])
+            resp = session.patch(f"{MS_BASE}/properties/email_recipients/", json={"value": recips_val}, timeout=2)
+            if resp.status_code == 404:
+                resp = session.post(f"{MS_BASE}/properties/", json={"key": "email_recipients", "value": recips_val},
+                                    timeout=2)
+            if not resp.ok: errors.append("email_recipients")
             if errors:
                 messages.error(request, _("Ошибка сохранения Email: ") + ", ".join(errors))
             else:
@@ -292,6 +313,20 @@ class NotificationsView(TemplateView):
             if not resp.ok:
                 errors.append("telegram_token")
 
+            key = "telegram_chat_id"
+            chat_id = request.POST.get(key, "")
+            url = f"{MS_BASE}/properties/{key}/"
+            print(f"→ PATCH {url} payload={{'value': {chat_id!r}}}")
+            resp = session.patch(url, json={"value": chat_id}, timeout=5)
+            print(f"← {resp.status_code} {resp.text}")
+            if resp.status_code in (404, 405):
+                post_url = f"{MS_BASE}/properties/"
+                print(f"→ POST {post_url} payload={{'key': {key!r}, 'value': {chat_id!r}}}")
+                resp = session.post(post_url, json={"key": key, "value": chat_id}, timeout=5)
+                print(f"← {resp.status_code} {resp.text}")
+            if not resp.ok:
+                errors.append(key)
+
             if errors:
                 messages.error(request, _("Ошибка сохранения Telegram: ") + ", ".join(errors))
             else:
@@ -311,17 +346,40 @@ class AboutView(TemplateView):
 def notifications_test(request):
     if request.method != 'POST':
         return HttpResponseBadRequest('Bad method')
-    data = json.loads(request.body)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        logger.error("notifications_test: неверный JSON: %r", request.body)
+        return HttpResponseBadRequest("Invalid JSON")
+
+    logger.debug("notifications_test: received payload %r", data)
+
     channel = data.get('channel')
     to      = data.get('to')
+    session = requests.Session()
+    session.trust_env = False
+
     if channel == 'email':
         endpoint = f"{MS_BASE}/notify/email/"
-        payload  = {'to': to}
+        # вот что нужно передавать
+        payload  = {
+            "to_email": to,
+            "subject":  "Тестовое сообщение",
+            "body":     "Это тестовое сообщение для проверки работы email-канала."
+        }
     elif channel == 'telegram':
         endpoint = f"{MS_BASE}/notify/telegram/"
-        payload  = {'to': to}
+        payload  = {
+            "chat_id": to,
+            "message": "Это тестовое сообщение для проверки работы Telegram-канала."
+        }
     else:
+        logger.error("notifications_test: unknown channel %r", channel)
         return HttpResponseBadRequest('Unknown channel')
-    r = requests.post(endpoint, json=payload, timeout=5)
-    return JsonResponse({}, status=(200 if r.ok else 500))
 
+    logger.debug("notifications_test: POST %s with %r", endpoint, payload)
+    resp = session.post(endpoint, json=payload, timeout=5)
+    logger.debug("notifications_test: response %s %r", resp.status_code, resp.text)
+
+    return JsonResponse({}, status=(200 if resp.ok else resp.status_code))

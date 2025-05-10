@@ -1,5 +1,5 @@
 from django import forms
-from .models import Service
+from .models import Service, Host
 from django.utils.translation import gettext_lazy as _
 
 class ServiceForm(forms.ModelForm):
@@ -12,12 +12,13 @@ class ServiceForm(forms.ModelForm):
 
     class Meta:
         model  = Service
-        fields = ['name', 'hostname', 'address', 'port', 'enable_monitoring', 'role']
+        fields = ['name', 'hostname', 'address', 'port', 'protocol', 'enable_monitoring', 'role']
         labels = {
             'name': _('Название'),
             'hostname': _('Hostname'),
             'address': _('Адрес'),
             'port': _('Порт'),
+            'protocol': _('Протокол'),
             'enable_monitoring': _('Установить мониторинг'),
             'role': _('Роль'),
         }
@@ -26,6 +27,12 @@ class ServiceForm(forms.ModelForm):
             'hostname': forms.TextInput(attrs={'class':'form-control'}),
             'address': forms.TextInput(attrs={'class':'form-control'}),
             'port': forms.NumberInput(attrs={'class':'form-control'}),
+            'protocol': forms.Select(attrs={'class':'form-control'}),
             'enable_monitoring': forms.CheckboxInput(attrs={'class':'form-check-input'}),
             'role': forms.Select(attrs={'class':'form-select'}),
         }
+
+class HostForm(forms.ModelForm):
+    class Meta:
+        model = Host
+        fields = ["name", "address"]

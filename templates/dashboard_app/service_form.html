@@ -9,25 +9,49 @@
     {% csrf_token %}
     {{ form.non_field_errors }}
 
-    <!-- Остальные поля -->
-    {% for field in form %}
-      {% if field.name in "name hostname address port" %}
-        <div class="mb-3">
-          {{ field.label_tag }}
-          {{ field }}
-          {{ field.errors }}
-        </div>
-      {% endif %}
-    {% endfor %}
+    <!-- Название -->
+    <div class="mb-3">
+      {{ form.name.label_tag }}
+      {{ form.name }}
+      {{ form.name.errors }}
+    </div>
 
-    <!-- Новый чекбокс -->
+    <!-- Hostname -->
+    <div class="mb-3">
+      {{ form.hostname.label_tag }}
+      {{ form.hostname }}
+      {{ form.hostname.errors }}
+    </div>
+
+    <!-- Адрес -->
+    <div class="mb-3">
+      {{ form.address.label_tag }}
+      {{ form.address }}
+      {{ form.address.errors }}
+    </div>
+
+    <!-- Порт -->
+    <div class="mb-3">
+      {{ form.port.label_tag }}
+      {{ form.port }}
+      {{ form.port.errors }}
+    </div>
+
+    <!-- Протокол -->
+    <div class="mb-3">
+      {{ form.protocol.label_tag }}
+      {{ form.protocol }}
+      {{ form.protocol.errors }}
+    </div>
+
+    <!-- Новый чекбокс: мониторинг -->
     <div class="form-check mb-3">
       {{ form.enable_monitoring }}
       {{ form.enable_monitoring.label_tag }}
       {{ form.enable_monitoring.errors }}
     </div>
 
-    <!-- Выпадающий список ролей -->
+    <!-- Выпадающий список ролей, показывается только при мониторинге -->
     <div class="mb-3" id="role-field" style="display: none;">
       {{ form.role.label_tag }}
       {{ form.role }}
@@ -41,13 +65,16 @@
 
 <script>
   // показываем/скрываем select роли по чекбоксу
-  const chk = document.getElementById('id_enable_monitoring');
-  const roleDiv = document.getElementById('role-field');
-  function toggleRole() {
-    roleDiv.style.display = chk.checked ? '' : 'none';
-  }
-  chk.addEventListener('change', toggleRole);
-  // инициализируем при загрузке
-  toggleRole();
+  document.addEventListener('DOMContentLoaded', () => {
+    const chk = document.getElementById('id_enable_monitoring');
+    const roleDiv = document.getElementById('role-field');
+    function toggleRole() {
+      roleDiv.style.display = chk.checked ? '' : 'none';
+    }
+    if (chk) {
+      chk.addEventListener('change', toggleRole);
+      toggleRole();
+    }
+  });
 </script>
 {% endblock %}

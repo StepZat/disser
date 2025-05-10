@@ -4,25 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aeaf36be-d7a6-4037-adbd-8b57d92c246f" name="Changes" comment="add service statuses, add system page">
-      <change afterPath="$PROJECT_DIR$/ml-analyzer/ml.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ml-analyzer/model.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ml-analyzer/vectorizer.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notifications_service/app/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notifications_service/app/notifications.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notifications_service/app/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/notifications_service/app/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/dashboard_app/about.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/dashboard_app/hosts.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/dashboard_app/notifications.html" afterDir="false" />
+    <list default="true" id="aeaf36be-d7a6-4037-adbd-8b57d92c246f" name="Changes" comment="add notifications">
+      <change afterPath="$PROJECT_DIR$/dashboard_app/middleware.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dashboard_app/monitor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dashboard_app/tasks.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dashboard_app/utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/siem_project/celery.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api_service/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/api_service/api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dashboard_app/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dashboard_app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dashboard_app/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/forms.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dashboard_app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dashboard_app/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notifications_service/app/notifications.py" beforeDir="false" afterPath="$PROJECT_DIR$/notifications_service/app/notifications.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notifications_service/app/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/notifications_service/app/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notifications_service/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/notifications_service/db.sqlite3" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/siem_project/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/siem_project/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/css/notifications.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/css/notifications.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/dashboard_app/notifications.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard_app/notifications.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/dashboard_app/service_form.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard_app/service_form.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/dashboard_app/system.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard_app/system.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -67,6 +68,7 @@
     "DefaultHtmlFileTemplate": "HTML File",
     "Python.api.executor": "Run",
     "Python.ml.executor": "Run",
+    "Python.monitor.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master",
     "last_opened_file_path": "C:/Users/stepz/PycharmProjects/disser/ml-analyzer"
@@ -79,6 +81,7 @@
       <recent name="C:\Users\stepz\PycharmProjects\disser\static\images" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\stepz\PycharmProjects\disser\siem_project" />
       <recent name="C:\Users\stepz\PycharmProjects\disser\templates\dashboard_app" />
       <recent name="C:\Users\stepz\PycharmProjects\disser\static\css" />
       <recent name="C:\Users\stepz\PycharmProjects\disser\templates" />
@@ -124,13 +127,22 @@
       <option name="project" value="LOCAL" />
       <updated>1746381973767</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="add notifications">
+      <option name="closed" value="true" />
+      <created>1746740392911</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1746740392911</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="finished login page" />
     <MESSAGE value="refactor get logs api, add services page" />
     <MESSAGE value="add service statuses, add system page" />
-    <option name="LAST_COMMIT_MESSAGE" value="add service statuses, add system page" />
+    <MESSAGE value="add notifications" />
+    <option name="LAST_COMMIT_MESSAGE" value="add notifications" />
   </component>
 </project>

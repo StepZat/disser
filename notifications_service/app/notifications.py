@@ -1,5 +1,5 @@
 # app/notifications.py
-
+import asyncio
 import ssl
 import smtplib
 from email.message import EmailMessage
@@ -36,4 +36,7 @@ def send_email(to_email: str, subject: str, body: str):
 def send_telegram(chat_id: str, text: str):
     token = NotificationConfig.get("telegram_token")
     bot = Bot(token=token)
-    bot.send_message(chat_id=chat_id, text=text)
+    print(token)
+    print(text)
+    print(chat_id)
+    asyncio.run(bot.send_message(chat_id=chat_id, text=text))

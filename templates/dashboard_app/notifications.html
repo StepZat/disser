@@ -66,6 +66,41 @@
                 <option value="starttls"{% if smtp_security == 'starttls' %} selected{% endif %}>{% trans "STARTTLS" %}</option>
               </select>
             </div>
+            <!-- список получателей -->
+            <div class="mb-3">
+              <label class="form-label">{% trans "Получатели" %}</label>
+              <div id="recipients-container">
+                {% if email_recipients %}
+                  {% for addr in email_recipients %}
+                    <div class="input-group mb-2">
+                      <input type="email"
+                             name="email_recipients[]"
+                             class="form-control"
+                             placeholder="{% trans 'Email получателя' %}"
+                             value="{{ addr }}">
+                      {% if not forloop.first %}
+                        <button type="button"
+                                class="btn btn-outline-danger btn-sm remove-recipient"
+                                aria-label="{% trans 'Удалить получателя' %}">–</button>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="input-group mb-2">
+                    <input type="email"
+                           name="email_recipients[]"
+                           class="form-control"
+                           placeholder="{% trans 'Email получателя' %}">
+                  </div>
+                {% endif %}
+              </div>
+              <button type="button"
+                      id="add-recipient"
+                      class="btn btn-sm btn-outline-primary">
+                + {% trans "Добавить получателя" %}
+              </button>
+            </div>
+            <!-- /список получателей -->
           </div>
           <div class="widget-footer d-flex justify-content-between">
             <div>
@@ -102,6 +137,16 @@
             <div class="mb-3">
               <label for="telegram-token" class="form-label">{% trans "API Токен Telegram" %}</label>
               <input type="text" class="form-control" id="telegram-token" name="telegram_token" value="{{ telegram_token }}" required>
+            </div>
+            <div class="mb-3">
+	          <label for="telegram-chat-id" class="form-label">{% trans "Chat ID для уведомлений" %}</label>
+	          <input type="text"
+                     class="form-control"
+                     id="telegram-chat-id"
+                     name="telegram_chat_id"
+                     value="{{ telegram_chat_id }}"
+                     placeholder="{% trans 'Ваш Chat ID' %}"
+                     required>
             </div>
           </div>
           <div class="widget-footer d-flex justify-content-between">
@@ -153,7 +198,10 @@
   });
 
   document.getElementById('telegram-test').addEventListener('click', async () => {
-    const to = prompt("{% trans 'Введите Chat ID для тестового сообщения' %}");
+    let to = document.getElementById('telegram-chat-id').value.trim();
+    if (!to) {
+      to = prompt("{% trans 'Введите Chat ID для тестового сообщения' %}");
+    }
     if (!to) return;
     try {
       const resp = await fetch("{% url 'system-notifications-test' %}", {
@@ -171,5 +219,34 @@
     }
   });
 })();
+</script>
+<script>
+  console.log("🔔 Recipients script loaded");
+
+  const container = document.getElementById('recipients-container');
+  const addBtn    = document.getElementById('add-recipient');
+
+  if (!container) console.warn("recipients-container not found");
+  if (!addBtn)    console.warn("add-recipient button not found");
+
+  if (container && addBtn) {
+    addBtn.addEventListener('click', () => {
+      console.log("➕ add-recipient clicked");
+      const div = document.createElement('div');
+      div.className = 'input-group mb-2';
+      div.innerHTML = `
+        <input type="email" name="email_recipients[]" class="form-control"
+               placeholder="{% trans 'Email получателя' %}">
+        <button type="button" class="btn btn-outline-danger remove-recipient">–</button>
+      `;
+      container.append(div);
+    });
+    container.addEventListener('click', e => {
+      if (e.target.classList.contains('remove-recipient')) {
+        console.log("➖ remove-recipient clicked");
+        e.target.closest('.input-group').remove();
+      }
+    });
+  }
 </script>
 {% endblock %}

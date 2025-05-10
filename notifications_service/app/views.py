@@ -17,6 +17,7 @@ class EmailNotifyView(APIView):
 
 class TelegramNotifyView(APIView):
     def post(self, request):
+        print(f"🔔 /notify/telegram/ got payload: {request.data})")
         ser = TelegramNotifySerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         send_telegram(ser.validated_data["chat_id"], ser.validated_data["message"])
