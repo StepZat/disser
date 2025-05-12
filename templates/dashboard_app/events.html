@@ -1,0 +1,194 @@
+<!-- templates/events.html -->
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}{% trans "События" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <h2>{% trans "События" %}</h2>
+
+  <!-- Фильтры (в одну строку, прокрутка при необходимости) -->
+  <div class="row g-2 mb-3 flex-nowrap overflow-auto">
+    <div class="col-auto">
+      <label class="form-label small" for="typeFilter">{% trans "Тип" %}</label>
+      <select id="typeFilter" class="form-select form-select-sm">
+        <option value="all">{% trans "Все" %}</option>
+        <option value="safe">{% trans "Safe" %}</option>
+        <option value="dangerous">{% trans "Dangerous" %}</option>
+      </select>
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label small" for="levelFilter">{% trans "Уровень лога" %}</label>
+      <select id="levelFilter" class="form-select form-select-sm">
+        <option value="">{% trans "Любой" %}</option>
+        <option value="DEBUG">DEBUG</option>
+        <option value="INFO">INFO</option>
+        <option value="WARNING">WARNING</option>
+        <option value="ERROR">ERROR</option>
+        <option value="CRITICAL">CRITICAL</option>
+        <option value="NOTICE">NOTICE</option>
+      </select>
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label small" for="hostFilter">{% trans "Hostname" %}</label>
+      <input type="text" id="hostFilter" class="form-control form-control-sm" placeholder="{% trans 'Hostname' %}">
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label small" for="searchFilter">{% trans "Поиск" %}</label>
+      <input type="text" id="searchFilter" class="form-control form-control-sm" placeholder="{% trans 'Поиск по сообщению' %}">
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label small" for="startFilter">{% trans "С даты/времени" %}</label>
+      <input type="datetime-local" id="startFilter" class="form-control form-control-sm">
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label small" for="endFilter">{% trans "По дату/время" %}</label>
+      <input type="datetime-local" id="endFilter" class="form-control form-control-sm">
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label small" for="pageSizeSelect">{% trans "Записей на странице" %}</label>
+      <select id="pageSizeSelect" class="form-select form-select-sm">
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="500">500</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Таблица логов -->
+  <table class="table table-striped table-sm" id="logsTable">
+    <thead>
+      <tr>
+        <th>{% trans "Timestamp" %}</th>
+        <th>{% trans "Level" %}</th>
+        <th>{% trans "Hostname" %}</th>
+        <th>{% trans "Message" %}</th>
+        <th>{% trans "Type" %}</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Пагинация -->
+  <nav>
+    <ul class="pagination pagination-sm justify-content-center" id="pagination"></ul>
+  </nav>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const API_URL = "{{ API_SCHEME }}://{{ API_HOST }}:{{ API_PORT }}{{ API_PATH }}";
+
+  document.addEventListener('DOMContentLoaded', () => {
+    let currentPage = 1;
+    let totalItems  = 0;
+    let pageSize    = parseInt(document.getElementById('pageSizeSelect').value, 10);
+
+    const $tableBody  = document.querySelector('#logsTable tbody');
+    const $pagination = document.getElementById('pagination');
+
+    async function loadData() {
+      const params = new URLSearchParams({
+        count: pageSize,
+        skip:  (currentPage - 1) * pageSize,
+        type:  document.getElementById('typeFilter').value,
+      });
+
+      // остальные фильтры
+      const filters = {
+        log_level: 'levelFilter',
+        hostname:  'hostFilter',
+        search:    'searchFilter',
+        start:     'startFilter',
+        end:       'endFilter',
+      };
+      Object.entries(filters).forEach(([key, id]) => {
+        const v = document.getElementById(id).value;
+        if (v) params.append(key, v);
+      });
+
+      const res  = await fetch(`${API_URL}?${params}`);
+      const json = await res.json();
+
+      totalItems = json.total;
+      renderTable(json.data);
+      renderPagination();
+    }
+
+    function renderTable(data) {
+      $tableBody.innerHTML = '';
+      data.forEach(d => {
+        $tableBody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${d.Timestamp || ''}</td>
+            <td>${d.Log_Level || ''}</td>
+            <td>${d.Hostname || ''}</td>
+            <td>${d.Info_message || ''}</td>
+            <td>${d.predicted_message_type || ''}</td>
+          </tr>`);
+      });
+    }
+
+    function renderPagination() {
+      const totalPages = Math.ceil(totalItems / pageSize);
+      const maxWindow  = 7;
+      let startPage = Math.max(1, currentPage - Math.floor(maxWindow / 2));
+      let endPage   = Math.min(totalPages, startPage + maxWindow - 1);
+      if (endPage - startPage < maxWindow - 1) {
+        startPage = Math.max(1, endPage - maxWindow + 1);
+      }
+
+      const pages = [];
+      if (startPage > 1) {
+        pages.push(1, '...');
+      }
+      for (let i = startPage; i <= endPage; i++) pages.push(i);
+      if (endPage < totalPages) {
+        pages.push('...', totalPages);
+      }
+
+      $pagination.innerHTML = '';
+      pages.forEach(p => {
+        const li = document.createElement('li');
+        li.className = 'page-item' + (p === currentPage ? ' active' : '') + (p === '...' ? ' disabled' : '');
+        li.innerHTML = p === '...'
+          ? `<span class="page-link">…</span>`
+          : `<a class="page-link" href="#">${p}</a>`;
+        if (p !== '...' && p !== currentPage) {
+          li.addEventListener('click', e => {
+            e.preventDefault();
+            currentPage = p;
+            loadData();
+          });
+        }
+        $pagination.append(li);
+      });
+    }
+
+    // Вешаем слушатели на фильтры
+    document.querySelectorAll(
+      '#typeFilter, #levelFilter, #hostFilter, #searchFilter, #startFilter, #endFilter'
+    ).forEach(el => el.addEventListener('input', () => {
+      currentPage = 1;
+      loadData();
+    }));
+
+    document.getElementById('pageSizeSelect')
+      .addEventListener('change', e => {
+        pageSize    = parseInt(e.target.value, 10);
+        currentPage = 1;
+        loadData();
+      });
+
+    loadData();
+  });
+</script>
+{% endblock %}

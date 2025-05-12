@@ -4,24 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aeaf36be-d7a6-4037-adbd-8b57d92c246f" name="Changes" comment="add celery and redis for cahing and cron tasks">
-      <change afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/grafana/provisioning/dashboards/1860_rev34.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/grafana/provisioning/dashboards/dashboards.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/grafana/provisioning/datasources/datasource.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/prometheus/file_sd/hosts.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/prometheus/prometheus.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/css/hosts.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+    <list default="true" id="aeaf36be-d7a6-4037-adbd-8b57d92c246f" name="Changes" comment="add hosts monitoring">
+      <change afterPath="$PROJECT_DIR$/templates/dashboard_app/events.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dashboard_app/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dashboard_app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dashboard_app/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/tasks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api_service/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/api_service/api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dashboard_app/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dashboard_app/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/dashboard_app/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prometheus/file_sd/hosts.json" beforeDir="false" afterPath="$PROJECT_DIR$/prometheus/file_sd/hosts.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/siem_project/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/siem_project/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/dashboard_app/hosts.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard_app/hosts.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,8 +23,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -60,17 +52,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Python.api.executor": "Run",
-    "Python.ml.executor": "Run",
-    "Python.monitor.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/stepz/PycharmProjects/disser/grafana/provisioning/dashboards"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Python.api.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ml.executor&quot;: &quot;Run&quot;,
+    &quot;Python.monitor.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/stepz/PycharmProjects/disser/grafana/provisioning/dashboards&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\stepz\PycharmProjects\disser\grafana\provisioning\dashboards" />
@@ -141,7 +133,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746878292712</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="add hosts monitoring">
+      <option name="closed" value="true" />
+      <created>1746919236186</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1746919236186</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -150,6 +150,7 @@
     <MESSAGE value="add service statuses, add system page" />
     <MESSAGE value="add notifications" />
     <MESSAGE value="add celery and redis for cahing and cron tasks" />
-    <option name="LAST_COMMIT_MESSAGE" value="add celery and redis for cahing and cron tasks" />
+    <MESSAGE value="add hosts monitoring" />
+    <option name="LAST_COMMIT_MESSAGE" value="add hosts monitoring" />
   </component>
 </project>

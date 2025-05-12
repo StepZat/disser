@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import socket
 from datetime import datetime, timedelta
 from logging import INFO
@@ -43,37 +44,49 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Загрузка логов из внешнего API MongoDB
-        try:
-            # Адрес и порт API берутся из переменных окружения
-            import os
-            api_host = os.environ.get('LOGS_API_HOST', '127.0.0.1')
-            api_port = os.environ.get('LOGS_API_PORT', '8081')
-            api_scheme = os.environ.get('LOGS_API_SCHEME', 'http')
-            api_path = os.environ.get('LOGS_API_PATH', '/logs')
-            api_url = f"{api_scheme}://{api_host}:{api_port}{api_path}"
-            params = {'count': 20, 'type': 'dangerous'}
-            print("API URL:", api_url)
-            response = requests.get(
-                                    api_url,
-                                    params=params,
-                                    timeout=5,
-                                    proxies={'http': None, 'https': None})
-            response.raise_for_status()
-            # Получаем список словарей
-            logs_list = response.json()
-            # Убираем лишние кавычки вокруг поля @timestamp
-            for log in logs_list:
-                ts = log.get('@timestamp')
-                if isinstance(ts, str):
-                    log['@timestamp'] = ts.strip('"')
-            context['logs'] = logs_list
-        except requests.RequestException as e:
-            # В случае ошибки передаём пустой список и сообщение об ошибке
-            context['logs'] = []
-            context['logs_error'] = str(e)
-        return context
 
+        # 1. Собираем параметры из GET (можно добавить hostname, search и т.п.)
+        params = {
+            'count': self.request.GET.get('count', 20),
+            'type':  self.request.GET.get('type', 'dangerous'),
+            'skip':  self.request.GET.get('skip', 0),
+        }
+        for key in ('log_level', 'hostname', 'search', 'start', 'end'):
+            if self.request.GET.get(key):
+                params[key] = self.request.GET[key]
+
+        # 2. Строим URL
+        api_host   = os.environ.get('LOGS_API_HOST',   '127.0.0.1')
+        api_port   = os.environ.get('LOGS_API_PORT',   '8081')
+        api_scheme = os.environ.get('LOGS_API_SCHEME', 'http')
+        api_path   = os.environ.get('LOGS_API_PATH',   '/logs')
+        api_url    = f"{api_scheme}://{api_host}:{api_port}{api_path}"
+
+        try:
+            # 3. Запрашиваем данные
+            resp = requests.get(
+                api_url,
+                params=params,
+                timeout=5,
+                proxies={'http': None, 'https': None}
+            )
+            resp.raise_for_status()
+            payload   = resp.json()                # {'total': ..., 'data': [...]}
+            logs_list = payload.get('data', [])    # берём только список
+
+            # 4. Обратная совместимость: если в шаблоне по-прежнему используют '@timestamp'
+            for log in logs_list:
+                if 'Timestamp' in log:
+                    log['@timestamp'] = log['Timestamp']
+
+            context['logs']  = logs_list
+            context['total'] = payload.get('total', 0)
+
+        except requests.RequestException as e:
+            context['logs']       = []
+            context['logs_error'] = str(e)
+
+        return context
 class ServiceListView(LoginRequiredMixin, ListView):
     model = Service
     template_name = 'dashboard_app/services.html'
@@ -511,3 +524,40 @@ def hosts_view(request):
         # ваша базовая ссылка на Grafana (замените на свою)
         "grafana_base": "http://127.0.0.1:3000/d-solo/1860/node-exporter-full?orgId=1",
     })
+
+class EventsView(TemplateView):
+    """
+    Отображает страницу событий.
+    Данные подтягиваются на фронте через fetch('/logs').
+    """
+    template_name = "dashboard_app/events.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['API_SCHEME'] = os.environ.get('LOGS_API_SCHEME', 'http')
+        context['API_HOST'] = os.environ.get('LOGS_API_HOST', '127.0.0.1')
+        context['API_PORT'] = os.environ.get('LOGS_API_PORT', '8081')
+        context['API_PATH'] = os.environ.get('LOGS_API_PATH', '/logs')
+        # 1. Собираем все параметры фильтрации/пагинации из GET
+        params = {
+            "count": self.request.GET.get("count", 10),
+            "skip": self.request.GET.get("skip", 0),
+            "type": self.request.GET.get("type", "all"),
+        }
+        for key in ("log_level", "hostname", "search", "start", "end"):
+            if self.request.GET.get(key):
+                params[key] = self.request.GET[key]
+
+        # 2. Запрашиваем JSON у FastAPI
+        url = f"{settings.LOGS_API_BASE_URL}"
+        resp = requests.get(url, params=params)
+        resp.raise_for_status()
+        payload = resp.json()
+
+        # 3. Вытаскиваем список логов из payload['data']
+        logs = payload.get("data", [])
+
+        # 4. Кладём их в контекст
+        context["logs"] = logs
+        context["total"] = payload.get("total", 0)
+        return context

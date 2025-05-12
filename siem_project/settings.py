@@ -29,6 +29,7 @@ LOGS_API_HOST = os.environ.get('LOGS_API_HOST', 'localhost')
 LOGS_API_PORT = os.environ.get('LOGS_API_PORT', '8081')
 LOGS_API_SCHEME = os.environ.get('LOGS_API_SCHEME', 'http')
 LOGS_API_PATH = os.environ.get('LOGS_API_PATH', '/logs')
+LOGS_API_BASE_URL = f"{LOGS_API_SCHEME}://{LOGS_API_HOST}:{LOGS_API_PORT}{LOGS_API_PATH}"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
