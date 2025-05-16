@@ -38,18 +38,34 @@ class EnvService:
         cache.set('env_service_statuses', statuses, None)
 
 
-def is_http_up(host, port, timeout=2.0):
+def is_http_up(host: str,
+               port: int,
+               scheme: str = 'http',
+               path: str = '/',
+               timeout: float = 2.0) -> (bool, str):
     """
-    Проверяет HTTP-сервис по корню (/).
-    Возвращает (bool up, str статус_код_или_ошибка).
+    Проверяет HTTP-сервис на scheme://host:port/path.
+    Сначала делает HEAD (allow_redirects=True). Если ответ 405 — падаем на GET.
+    Считаем Up, если код в диапазоне [200, 400).
+    Возвращает (up, статус_код_или_текст_ошибки).
     """
-    url = f'http://{host}:{port}/'
+    url = f"{scheme}://{host}:{port}{path}"
     try:
-        resp = requests.get(url, timeout=timeout)
-        up = 200 <= resp.status_code < 400
-        return up, str(resp.status_code)
-    except Exception as e:
-        return False, str(e)
+        # Пробуем HEAD — быстрее, меньше трафика
+        resp = requests.head(url, timeout=timeout, allow_redirects=True)
+        if resp.status_code == 405:
+            # Некоторые сервисы не поддерживают HEAD
+            resp = requests.get(url, timeout=timeout, allow_redirects=True)
+
+        status = resp.status_code
+        up = 200 <= status < 400
+        logger.debug(f"HTTP ping {url} → {status} (up={up})")
+        return up, str(status)
+
+    except requests.RequestException as e:
+        err = str(e)
+        logger.debug(f"HTTP ping {url} → exception: {err}")
+        return False, err
 
 
 async def tcp_up(host, port, timeout=3.0):
@@ -146,13 +162,9 @@ def monitor_services(service_objs):
         print(f"🛠️  Checking {svc.name} @ {svc.address}:{svc.port} via {getattr(svc, 'protocol', 'tcp')}")
         logger.debug(svc)
         proto = getattr(svc, 'protocol', 'tcp').lower()
-        if proto == 'http':
-            up, status = is_http_up(svc.address, svc.port)
-            print(f"   📡 HTTP result for {svc.name}: up={up}, status={status}")
-        else:
-            up = asyncio.run(tcp_up(svc.address, svc.port))
-            print(f"   📡 TCP result for {svc.name}: up={up}")
-            status = None
+        up = asyncio.run(tcp_up(svc.address, svc.port))
+        print(f"   📡 TCP result for {svc.name}: up={up}")
+        status = None
 
         prev = getattr(svc, 'last_is_up', None)
         print(f"   🔄 previous={prev}, current={up}")

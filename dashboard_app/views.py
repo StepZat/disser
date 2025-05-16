@@ -6,6 +6,7 @@ import socket
 from datetime import datetime, timedelta
 from logging import INFO
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from django.core.cache import cache
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -43,50 +44,32 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard_app/dashboard.html'
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        ctx = super().get_context_data(**kwargs)
 
-        # 1. Собираем параметры из GET (можно добавить hostname, search и т.п.)
-        params = {
-            'count': self.request.GET.get('count', 20),
-            'type':  self.request.GET.get('type', 'dangerous'),
-            'skip':  self.request.GET.get('skip', 0),
-        }
-        for key in ('log_level', 'hostname', 'search', 'start', 'end'):
-            if self.request.GET.get(key):
-                params[key] = self.request.GET[key]
+        # URL вашего FastAPI
+        ctx['API_SCHEME'] = os.environ.get('LOGS_API_SCHEME', 'http')
+        ctx['API_HOST']   = os.environ.get('LOGS_API_HOST',   '127.0.0.1')
+        ctx['API_PORT']   = os.environ.get('LOGS_API_PORT',   '8081')
+        # базовый путь для логов
+        ctx['API_PATH']   = '/logs'
+        # при необходимости для health и metrics можно завести:
+        ctx['HEALTH_PATH']   = '/health'
+        ctx['HOSTS_HEALTH_PATH'] = '/hosts/health'
+        ctx['METRICS_PATH']  = '/metrics/system'
+        # 2) Берём таймзону из .env
+        tz_name = os.environ.get('TIME_ZONE', 'UTC')
+        tz = ZoneInfo(tz_name)
 
-        # 2. Строим URL
-        api_host   = os.environ.get('LOGS_API_HOST',   '127.0.0.1')
-        api_port   = os.environ.get('LOGS_API_PORT',   '8081')
-        api_scheme = os.environ.get('LOGS_API_SCHEME', 'http')
-        api_path   = os.environ.get('LOGS_API_PATH',   '/logs')
-        api_url    = f"{api_scheme}://{api_host}:{api_port}{api_path}"
+        # 3) Считаем now и since в этой зоне
+        now = datetime.now(tz)
+        since = now - timedelta(days=1)
 
-        try:
-            # 3. Запрашиваем данные
-            resp = requests.get(
-                api_url,
-                params=params,
-                timeout=5,
-                proxies={'http': None, 'https': None}
-            )
-            resp.raise_for_status()
-            payload   = resp.json()                # {'total': ..., 'data': [...]}
-            logs_list = payload.get('data', [])    # берём только список
+        # 4) Форматируем в ISO без Z (будет локальное время сервера)
+        ctx['LOGS_START'] = since.strftime('%Y-%m-%dT%H:%M:%S')
+        ctx['LOGS_END'] = now.strftime('%Y-%m-%dT%H:%M:%S')
+        return ctx
 
-            # 4. Обратная совместимость: если в шаблоне по-прежнему используют '@timestamp'
-            for log in logs_list:
-                if 'Timestamp' in log:
-                    log['@timestamp'] = log['Timestamp']
 
-            context['logs']  = logs_list
-            context['total'] = payload.get('total', 0)
-
-        except requests.RequestException as e:
-            context['logs']       = []
-            context['logs_error'] = str(e)
-
-        return context
 class ServiceListView(LoginRequiredMixin, ListView):
     model = Service
     template_name = 'dashboard_app/services.html'
@@ -550,7 +533,7 @@ class EventsView(TemplateView):
 
         # 2. Запрашиваем JSON у FastAPI
         url = f"{settings.LOGS_API_BASE_URL}"
-        resp = requests.get(url, params=params)
+        resp = requests.get(url, params=params, proxies={'http': None, 'https': None})
         resp.raise_for_status()
         payload = resp.json()
 

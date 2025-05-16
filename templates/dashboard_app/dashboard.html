@@ -1,72 +1,361 @@
-{% extends 'base.html' %}
+<!-- templates/dashboard_app/dashboard.html -->
+{% extends "base.html" %}
 {% load static i18n %}
-{% get_current_language as LANGUAGE_CODE %}
-
-{% block title %}{% trans "Панель SIEM" %}{% endblock %}
+{% block title %}{% trans "Дашборд" %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid p-4">
-  <h1 class="mb-4">{% trans "Панель мониторинга SIEM" %}</h1>
-  <div class="row">
-    <!-- Таблица логов -->
-    <div class="col-md-8">
-      <div class="card mb-4 shadow-sm">
-        <div class="card-header">{% trans "Последние инциденты" %}</div>
-        <div class="card-body" style="padding: 0;">
-           {% if logs_error %}
-           <div class="alert alert-danger m-3">
-             {{ logs_error }}
-           </div>
-           {% endif %}
-          <div class="table-responsive" style="max-height:75vh; overflow:auto;">
-            <table class="table table-striped table-bordered mb-0">
-              <colgroup>
-                <col style="width: 20%;">
-                <col style="width: 20%;">
-                <col style="width: 20%;">
-                <col>
-              </colgroup>
-              <thead class="table-light">
+<div class="container-fluid py-4">
+
+  <!-- Row 1: Alerts, Services & Hosts -->
+  <div class="row g-4 mb-2 align-items-start">
+    <!-- 1) Алертов за 24 ч → Events -->
+    <div class="col">
+      <a href="{% url 'events' %}" class="text-decoration-none">
+        <div class="card text-center h-100">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <h5 class="card-title">{% trans "Алертов за 24 ч" %}</h5>
+            <p id="alertCount" class="display-5 mb-0">—</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 2) Доступные сервисы → Services -->
+    <div class="col">
+      <a href="{% url 'services' %}" class="text-decoration-none">
+        <div class="card text-center h-100">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <h5 class="card-title">{% trans "Доступные сервисы" %}</h5>
+            <p id="availableServicesCount" class="display-5 text-success mb-0">—</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 3) Недоступные сервисы → Services -->
+    <div class="col">
+      <a href="{% url 'services' %}" class="text-decoration-none">
+        <div class="card text-center h-100">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <h5 class="card-title">{% trans "Недоступные сервисы" %}</h5>
+            <p id="unavailableServicesCount" class="display-5 text-danger mb-0">—</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 4) Доступные хосты → System Hosts -->
+    <div class="col">
+      <a href="{% url 'system-hosts' %}" class="text-decoration-none">
+        <div class="card text-center h-100">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <h5 class="card-title">{% trans "Доступные хосты" %}</h5>
+            <p id="availableHostsCount" class="display-5 text-success mb-0">—</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- 5) Недоступные хосты → System Hosts -->
+    <div class="col">
+      <a href="{% url 'system-hosts' %}" class="text-decoration-none">
+        <div class="card text-center h-100">
+          <div class="card-body d-flex flex-column justify-content-center">
+            <h5 class="card-title">{% trans "Недоступные хосты" %}</h5>
+            <p id="unavailableHostsCount" class="display-5 text-danger mb-0">—</p>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Row 2: Pie charts & Bar chart -->
+  <div class="row g-4 mb-2">
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-title">{% trans "Алерты по уровню" %}</h6>
+          <canvas id="levelPie" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-title">{% trans "Топ-5 хостов" %}</h6>
+          <canvas id="hostsPie" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card h-100 d-flex flex-column">
+        <div class="card-body d-flex flex-column p-2">
+          <h6 class="card-title mb-2">{% trans "Алерты по часам" %}</h6>
+          <div class="flex-fill position-relative">
+            <canvas id="hourBar"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Recent alerts + System load -->
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="card-title">{% trans "Последние 10 алертов" %}</h6>
+          <div class="table-responsive">
+            <table class="table table-striped table-sm mb-0">
+              <thead>
                 <tr>
-                  <th><div class="resizable">{% trans "Hostname" %}</div></th>
-                  <th><div class="resizable">{% trans "Timestamp" %}</div></th>
-                  <th><div class="resizable">{% trans "Log level" %}</div></th>
-                  <th><div class="resizable">{% trans "Info message" %}</div></th>
+                  <th scope="col">{% trans "Timestamp" %}</th>
+                  <th scope="col">{% trans "Level" %}</th>
+                  <th scope="col">{% trans "Hostname" %}</th>
+                  <th scope="col">{% trans "Message" %}</th>
                 </tr>
               </thead>
-              <tbody>
-                {% for log in logs %}
-                  <tr>
-                    <td>{{ log.Hostname }}</td>
-                    <td>{{ log.Timestamp }}</td>
-                    <td>
-                       <span class="{% if log.Log_Level == 'ERROR' %}level-error{% elif log.Log_Level == 'WARNING' %}level-warning{% else %}level-info{% endif %}">
-                         {{ log.Log_Level }}
-                       </span>
-                    </td>
-                    <td>{{ log.Info_message }}</td>
-                  </tr>
-                {% empty %}
-                  <tr>
-                    <td colspan="4" class="text-center">{% trans "No logs available" %}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
+              <tbody id="recentAlerts"></tbody>
             </table>
           </div>
         </div>
       </div>
     </div>
+<!-- Нагрузка на систему -->
+  <div class="col-lg-4">
+    <div class="card h-100 d-flex flex-column">
+      <div class="card-body d-flex flex-column p-3">
+        <h6 class="card-title mb-3">{% trans "Нагрузка на систему API" %}</h6>
+        <!-- Progress bars -->
+        <div class="mb-3">
+          <label class="form-label small">CPU</label>
+          <div class="progress position-relative" style="height: 1.5rem;">
+            <div
+              id="cpuBar"
+              class="progress-bar"
+              role="progressbar"
+              style="width: 0%;"
+            ></div>
+            <div
+              id="cpuBarLabel"
+              class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+              style="pointer-events: none; color: black;"
+            >0%</div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small">RAM</label>
+          <div class="progress position-relative" style="height: 1.5rem;">
+            <div
+              id="ramBar"
+              class="progress-bar bg-success"
+              role="progressbar"
+              style="width: 0%;"
+            ></div>
+            <div
+              id="ramBarLabel"
+              class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+              style="pointer-events: none; color: black;"
+            >0%</div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label small">Storage</label>
+          <div class="progress position-relative" style="height: 1.5rem;">
+            <div
+              id="storageBar"
+              class="progress-bar bg-info"
+              role="progressbar"
+              style="width: 0%;"
+            ></div>
+            <div
+              id="storageBarLabel"
+              class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+              style="pointer-events: none; color: black;"
+            >0%</div>
+          </div>
+        </div>
 
-    <!-- Блок последних инцидентов -->
-    <div class="col-md-4">
-      <div class="card mb-4 shadow-sm">
-        <div class="card-header">{% trans "Последние инциденты" %}</div>
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item">{% trans "Загрузка данных..." %}</li>
-        </ul>
+        <!-- Load Average panels -->
+        <div class="row g-2 mt-auto flex-fill">
+          <div class="col-4">
+            <div class="card bg-light h-100 d-flex">
+              <div class="card-body text-center p-2">
+                <div class="small text-muted">{% trans "1 мин." %}</div>
+                <div id="la1" class="display-5 flex-fill d-flex align-items-center justify-content-center">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center p-2">
+                <div class="small text-muted">{% trans "5 мин." %}</div>
+                <div id="la5" class="display-5 flex-fill d-flex align-items-center justify-content-center">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="card bg-light h-100">
+              <div class="card-body text-center p-2">
+                <div class="small text-muted">{% trans "15 мин." %}</div>
+                <div id="la15" class="display-5 flex-fill d-flex align-items-center justify-content-center">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+  </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const API_BASE = "{{ API_SCHEME }}://{{ API_HOST }}:{{ API_PORT }}";
+  document.addEventListener('DOMContentLoaded', async () => {
+    const start = "{{ LOGS_START }}";
+    const end   = "{{ LOGS_END }}";
+
+    // 1) Алерты dangerous
+    const logsRes = await fetch(`${API_BASE}{{ API_PATH }}?type=dangerous&start=${start}&end=${end}&count=10000`);
+    const { total: totalDangerous, data: logs } = await logsRes.json();
+    document.getElementById('alertCount').textContent = totalDangerous;
+
+    // 2–3) Сервисы
+    const healthRes = await fetch(`${API_BASE}{{ HEALTH_PATH }}`);
+    const { services } = await healthRes.json();
+    const svcUp   = services.filter(s => s.status === 'up').length;
+    const svcDown = services.length - svcUp;
+    document.getElementById('availableServicesCount').textContent   = svcUp;
+    document.getElementById('unavailableServicesCount').textContent = svcDown;
+
+    // 4–5) Хосты
+    const hostsRes = await fetch(`${API_BASE}{{ HOSTS_HEALTH_PATH }}`);
+    const { hosts } = await hostsRes.json();
+    const hostsUp   = hosts.filter(h => h.status === 'up').length;
+    const hostsDown = hosts.length - hostsUp;
+    document.getElementById('availableHostsCount').textContent   = hostsUp;
+    document.getElementById('unavailableHostsCount').textContent = hostsDown;
+
+    // Диаграммы уровней
+    const lvlCounts = {};
+    logs.forEach(d => lvlCounts[d.Log_Level] = (lvlCounts[d.Log_Level]||0) + 1);
+    const levels = Object.keys(lvlCounts);
+    new Chart(document.getElementById('levelPie').getContext('2d'), {
+      type: 'pie',
+      data: { labels: levels, datasets: [{ data: levels.map(l => lvlCounts[l]) }] },
+      options: { plugins: { legend: { display: true } } }
+    });
+
+    // Топ-5 хостов
+    const hostCounts = {};
+    logs.forEach(d => hostCounts[d.Hostname] = (hostCounts[d.Hostname]||0) + 1);
+    const top5 = Object.entries(hostCounts).sort((a,b) => b[1] - a[1]).slice(0,5);
+    new Chart(document.getElementById('hostsPie').getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: top5.map(e => e[0]),
+        datasets: [{ data: top5.map(e => e[1]) }]
+      },
+      options: { plugins: { legend: { display: true } } }
+    });
+
+ // helper: парсим строку ISO с микросекундами и Z в локальное Date
+function parseLocalDate(timestamp) {
+  // 1) Убираем Z
+  let s = timestamp.replace(/Z$/, '');
+  // 2) Обрезаем дробную часть до 3 цифр (миллисекунды)
+  s = s.replace(/\.(\d{3})\d*/, '.$1');
+  // 3) Теперь JS будет считать это как ЛОКАЛЬНОЕ время
+  return new Date(s);
+}
+
+// 4) Алерты по часам (с parseLocalDate)
+const endTime   = new Date();
+const startTime = new Date(endTime.getTime() - 24*3600_000);
+
+const hours   = [];
+const buckets = [];
+for (let t = new Date(startTime); t <= endTime; t.setHours(t.getHours()+1)) {
+  hours.push(t.getHours().toString().padStart(2,'0') + ':00');
+  buckets.push(0);
+}
+
+logs.forEach(d => {
+  const lt = parseLocalDate(d.Timestamp);
+  if (lt >= startTime && lt <= endTime) {
+    const idx = Math.floor((lt - startTime) / 3600_000);
+    if (idx >= 0 && idx < buckets.length) buckets[idx]++;
+  }
+});
+
+new Chart(
+  document.getElementById('hourBar').getContext('2d'),
+  {
+    type: 'bar',
+    data:    { labels: hours,     datasets: [{ data: buckets }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { display: false } }
+    }
+  }
+);
+
+
+
+
+    // Последние 10 алертов
+    logs.sort((a,b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+    document.getElementById('recentAlerts').innerHTML = logs.slice(0,10).map(d => `
+      <tr>
+        <td>${d.Timestamp}</td>
+        <td>${d.Log_Level}</td>
+        <td>${d.Hostname}</td>
+        <td>${d.Info_message}</td>
+      </tr>
+    `).join('');
+
+async function refreshSystemLoad() {
+  try {
+    console.log('Fetching system metrics from', `${API_BASE}{{ METRICS_PATH }}`);
+const res = await fetch(`${API_BASE}{{ METRICS_PATH }}`);
+console.log('Metrics response status:', res.status);
+const m = await res.json();
+console.log('Metrics payload:', m);
+    // обновляем progressbar’ы
+    // CPU
+    document.getElementById('cpuBar').style.width     = m.cpu + '%';
+    document.getElementById('cpuBarLabel').textContent = m.cpu + '%';
+
+    // RAM
+    document.getElementById('ramBar').style.width     = m.ram + '%';
+    document.getElementById('ramBarLabel').textContent = m.ram + '%';
+
+    // Storage
+    document.getElementById('storageBar').style.width     = m.storage + '%';
+    document.getElementById('storageBarLabel').textContent = m.storage + '%';
+
+    // Load Avg panels
+    document.getElementById('la1').textContent  = m.la1.toFixed(2);
+    document.getElementById('la5').textContent  = m.la5.toFixed(2);
+    document.getElementById('la15').textContent = m.la15.toFixed(2);
+  } catch (e) {
+    console.error('Failed to refresh system load:', e);
+  }
+}
+
+  refreshSystemLoad();
+  setInterval(refreshSystemLoad, 30_000);
+  });
+</script>
+{% endblock %}
+
+
+
+
+
+
