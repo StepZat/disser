@@ -230,3 +230,12 @@ GRAFANA_BASE = (
     f"?orgId={GRAFANA_ORG_ID}"
 )
 
+APP_NAME = "LUMEN SIEM System"
+APP_VERSION = "1.0.0"
+APP_BUILD_DATE = "2025-05-15"
+APP_AUTHORS = [
+    {"name": "Степан Затинщиков", "email": "ivan@example.com"},
+]
+APP_LICENSE = "MIT"
+APP_REPO_URL = "https://github.com/stepzat/disser"
+

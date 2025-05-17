@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SIEM Project 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-01 12:00+0000\n"
+"POT-Creation-Date: 2025-05-18 03:04+0700\n"
 "PO-Revision-Date: 2025-05-01 12:00+0000\n"
 "Last-Translator: Your Name <you@example.com>\n"
 "Language-Team: English <en@example.com>\n"
@@ -17,30 +17,596 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#. title
-msgid "SIEM"
-msgstr "SIEM"
-
-#. login heading
-msgid "Вход в систему SIEM"
-msgstr "Login to SIEM"
-
-#. username label
+#: .\auth_app\forms.py:9 .\auth_app\forms.py:13
+#: .\templates\dashboard_app\notifications.html:42
 msgid "Имя пользователя"
 msgstr "Username"
 
-#. password label
+#: .\auth_app\forms.py:18 .\auth_app\forms.py:22
 msgid "Пароль"
 msgstr "Password"
 
-#. error message
+#: .\dashboard_app\forms.py:11 .\templates\dashboard_app\about.html:13
+#: .\templates\dashboard_app\services.html:40
+msgid "Название"
+msgstr "Name"
+
+#: .\dashboard_app\forms.py:12 .\templates\dashboard_app\dashboard.html:114
+#: .\templates\dashboard_app\events.html:35
+#: .\templates\dashboard_app\events.html:36
+#: .\templates\dashboard_app\events.html:71
+#: .\templates\dashboard_app\services.html:41
+#: .\templates\dashboard_app\system.html:33
+msgid "Hostname"
+msgstr "Hostname"
+
+#: .\dashboard_app\forms.py:13 .\dashboard_app\forms.py:42
+#: .\templates\dashboard_app\hosts.html:63
+#: .\templates\dashboard_app\services.html:42
+msgid "Адрес"
+msgstr "Address"
+
+#: .\dashboard_app\forms.py:14 .\templates\dashboard_app\notifications.html:38
+#: .\templates\dashboard_app\services.html:43
+msgid "Порт"
+msgstr "Port"
+
+#: .\dashboard_app\forms.py:15
+msgid "Протокол"
+msgstr "Protocol"
+
+#: .\dashboard_app\forms.py:32
+msgid "Имя хоста"
+msgstr "Name"
+
+#: .\dashboard_app\forms.py:37
+msgid "IP или hostname"
+msgstr "IP or Hostname"
+
+#: .\dashboard_app\forms.py:41 .\templates\dashboard_app\hosts.html:62
+msgid "Имя"
+msgstr "Name"
+
+#: .\dashboard_app\views.py:290
+msgid "Ошибка сброса Email: "
+msgstr "Email reset error: "
+
+#: .\dashboard_app\views.py:292
+msgid "Настройки Email сброшены"
+msgstr "Email settings reset"
+
+#: .\dashboard_app\views.py:309
+msgid "Ошибка сброса Telegram: "
+msgstr "Telegram reset error: "
+
+#: .\dashboard_app\views.py:311
+msgid "Настройки Telegram сброшены"
+msgstr "Telegram properties reset"
+
+#: .\dashboard_app\views.py:358
+msgid "Параметры Email успешно сохранены"
+msgstr "Email parameters saved successfully"
+
+#: .\dashboard_app\views.py:360
+msgid "Ошибка сохранения Email: "
+msgstr "Email properties saving error"
+
+#: .\dashboard_app\views.py:396
+msgid "Параметры Telegram успешно сохранены"
+msgstr "Telegram parameters saved successfully"
+
+#: .\dashboard_app\views.py:398
+msgid "Ошибка сохранения Telegram: "
+msgstr "Telegram properties saving error"
+
+#: .\dashboard_app\views.py:401
+msgid "Неизвестная форма уведомлений"
+msgstr "Unknown notification form"
+
+#: .\siem_project\settings.py:135
+msgid "Russian"
+msgstr "Russian"
+
+#: .\siem_project\settings.py:136
+msgid "English"
+msgstr "English"
+
+#: .\templates\auth_app\login.html:5
+msgid "Вход в SIEM"
+msgstr "Login"
+
+#: .\templates\auth_app\login.html:12
+msgid "Логотип SIEM"
+msgstr "SIEM Logo"
+
+#: .\templates\auth_app\login.html:17
+msgid "Вход в систему SIEM"
+msgstr "Login"
+
+#: .\templates\auth_app\login.html:24
 msgid "Неправильный логин или пароль."
 msgstr "Incorrect username or password."
 
-#. submit button
+#: .\templates\auth_app\login.html:36
 msgid "Войти"
 msgstr "Login"
 
-#. logo alt
-msgid "Логотип SIEM"
-msgstr "SIEM Logo"
+#: .\templates\auth_app\login.html:51 .\templates\base.html:63
+msgid "Русский"
+msgstr "Russian"
+
+#: .\templates\base.html:8
+msgid "LUMEN"
+msgstr "LUMEN"
+
+#: .\templates\base.html:85
+msgid "Выход"
+msgstr "Log out"
+
+#: .\templates\base.html:93
+msgid "Меню"
+msgstr "Menu"
+
+#: .\templates\base.html:94 .\templates\dashboard_app\notifications.html:174
+#: .\templates\dashboard_app\notifications.html:194
+#: .\templates\dashboard_app\notifications.html:213
+msgid "Закрыть"
+msgstr "Close"
+
+#: .\templates\base.html:100
+msgid "Дашборды"
+msgstr "Dashboards"
+
+#: .\templates\base.html:104 .\templates\dashboard_app\system.html:4
+msgid "Система"
+msgstr "System"
+
+#: .\templates\base.html:108 .\templates\dashboard_app\_system_nav.html:6
+#: .\templates\dashboard_app\services.html:4
+#: .\templates\dashboard_app\services.html:9
+#: .\templates\dashboard_app\system.html:24
+msgid "Сервисы"
+msgstr "Services"
+
+#: .\templates\base.html:112 .\templates\dashboard_app\events.html:4
+#: .\templates\dashboard_app\events.html:8
+msgid "События"
+msgstr "Events"
+
+#: .\templates\base_auth.html:8
+msgid "SIEM"
+msgstr "SIEM"
+
+#: .\templates\dashboard_app\_system_nav.html:10
+#: .\templates\dashboard_app\hosts.html:8
+msgid "Хосты"
+msgstr "Hosts"
+
+#: .\templates\dashboard_app\_system_nav.html:14
+#: .\templates\dashboard_app\notifications.html:12
+msgid "Уведомления"
+msgstr "Notifications"
+
+#: .\templates\dashboard_app\_system_nav.html:18
+#: .\templates\dashboard_app\about.html:4
+#: .\templates\dashboard_app\about.html:10
+msgid "О системе"
+msgstr "About system"
+
+#: .\templates\dashboard_app\about.html:16
+msgid "Версия"
+msgstr "Version"
+
+#: .\templates\dashboard_app\about.html:21
+msgid "Авторы"
+msgstr "Author"
+
+#: .\templates\dashboard_app\about.html:30
+msgid "Лицензия"
+msgstr "License"
+
+#: .\templates\dashboard_app\about.html:33
+msgid "Репозиторий"
+msgstr "Repository"
+
+#: .\templates\dashboard_app\about.html:56
+msgid "Текст лицензии (английский)"
+msgstr "License text (EN)"
+
+#: .\templates\dashboard_app\about.html:81
+msgid "Текст лицензии (русский)"
+msgstr "License text (RU)"
+
+#: .\templates\dashboard_app\dashboard.html:4
+msgid "Дашборд"
+msgstr "Dashboard"
+
+#: .\templates\dashboard_app\dashboard.html:16
+msgid "Алертов за 24 ч"
+msgstr "Alerts for 24h"
+
+#: .\templates\dashboard_app\dashboard.html:28
+msgid "Доступные сервисы"
+msgstr "Available services"
+
+#: .\templates\dashboard_app\dashboard.html:40
+msgid "Недоступные сервисы"
+msgstr "Unavailable services"
+
+#: .\templates\dashboard_app\dashboard.html:52
+msgid "Доступные хосты"
+msgstr "Available hosts"
+
+#: .\templates\dashboard_app\dashboard.html:64
+msgid "Недоступные хосты"
+msgstr "Unavailable hosts"
+
+#: .\templates\dashboard_app\dashboard.html:77
+msgid "Алерты по уровню"
+msgstr "Alerts by log level"
+
+#: .\templates\dashboard_app\dashboard.html:85
+msgid "Топ-5 хостов"
+msgstr "Top hosts by alerts"
+
+#: .\templates\dashboard_app\dashboard.html:93
+msgid "Алерты по часам"
+msgstr "Alerts by hour"
+
+#: .\templates\dashboard_app\dashboard.html:107
+msgid "Последние 10 алертов"
+msgstr "Last 10 alerts"
+
+#: .\templates\dashboard_app\dashboard.html:112
+#: .\templates\dashboard_app\events.html:69
+msgid "Timestamp"
+msgstr "Time"
+
+#: .\templates\dashboard_app\dashboard.html:113
+#: .\templates\dashboard_app\events.html:70
+msgid "Level"
+msgstr "Log Level"
+
+#: .\templates\dashboard_app\dashboard.html:115
+#: .\templates\dashboard_app\events.html:72
+msgid "Message"
+msgstr "Message"
+
+#: .\templates\dashboard_app\dashboard.html:128
+msgid "Нагрузка на систему API"
+msgstr "Load on API System"
+
+#: .\templates\dashboard_app\dashboard.html:184
+msgid "1 мин."
+msgstr "1 min."
+
+#: .\templates\dashboard_app\dashboard.html:192
+msgid "5 мин."
+msgstr "5 min."
+
+#: .\templates\dashboard_app\dashboard.html:200
+msgid "15 мин."
+msgstr "15 min."
+
+#: .\templates\dashboard_app\events.html:13
+msgid "Тип"
+msgstr "Type"
+
+#: .\templates\dashboard_app\events.html:15
+msgid "Все"
+msgstr "All"
+
+#: .\templates\dashboard_app\events.html:16
+msgid "Safe"
+msgstr "Safe"
+
+#: .\templates\dashboard_app\events.html:17
+msgid "Dangerous"
+msgstr "Dangerous"
+
+#: .\templates\dashboard_app\events.html:22
+msgid "Уровень лога"
+msgstr "Log Level"
+
+#: .\templates\dashboard_app\events.html:24
+msgid "Любой"
+msgstr "Any"
+
+#: .\templates\dashboard_app\events.html:40
+msgid "Поиск"
+msgstr "Search"
+
+#: .\templates\dashboard_app\events.html:41
+msgid "Поиск по сообщению"
+msgstr "Message search"
+
+#: .\templates\dashboard_app\events.html:45
+msgid "С даты/времени"
+msgstr "Begin date"
+
+#: .\templates\dashboard_app\events.html:50
+msgid "По дату/время"
+msgstr "End date"
+
+#: .\templates\dashboard_app\events.html:55
+msgid "Записей на странице"
+msgstr "Entries per page"
+
+#: .\templates\dashboard_app\events.html:73
+msgid "Type"
+msgstr "Type"
+
+#: .\templates\dashboard_app\hosts.html:27
+#: .\templates\dashboard_app\hosts.html:46
+msgid "Добавить хост"
+msgstr "Add Host"
+
+#: .\templates\dashboard_app\hosts.html:56
+msgid "Список хостов"
+msgstr "Hosts List"
+
+#: .\templates\dashboard_app\hosts.html:64
+#: .\templates\dashboard_app\services.html:44
+#: .\templates\dashboard_app\system.html:36
+msgid "Статус"
+msgstr "Status"
+
+#: .\templates\dashboard_app\hosts.html:75
+#: .\templates\dashboard_app\system.html:48
+msgid "Up"
+msgstr "Up"
+
+#: .\templates\dashboard_app\hosts.html:77
+#: .\templates\dashboard_app\system.html:50
+msgid "Down"
+msgstr "Down"
+
+#: .\templates\dashboard_app\hosts.html:79
+msgid "—"
+msgstr "—"
+
+#: .\templates\dashboard_app\hosts.html:89
+msgid "Удалить хост"
+msgstr "Delete Host"
+
+#: .\templates\dashboard_app\hosts.html:98
+msgid "Нет хостов"
+msgstr "No Hosts"
+
+#: .\templates\dashboard_app\hosts.html:110
+msgid "Хост"
+msgstr "Host"
+
+#: .\templates\dashboard_app\hosts.html:115
+msgid "— выберите —"
+msgstr "— choose —"
+
+#: .\templates\dashboard_app\hosts.html:125
+msgid "Начало"
+msgstr "Monitoring start"
+
+#: .\templates\dashboard_app\hosts.html:133
+msgid "Конец"
+msgstr "Monitoring end"
+
+#: .\templates\dashboard_app\hosts.html:142
+msgid "Применить"
+msgstr "Apply"
+
+#: .\templates\dashboard_app\notifications.html:22
+msgid "Email"
+msgstr "Email"
+
+#: .\templates\dashboard_app\notifications.html:34
+msgid "Адрес почтового сервера"
+msgstr "Mail server address"
+
+#: .\templates\dashboard_app\notifications.html:46
+msgid "Пароль пользователя"
+msgstr "Password"
+
+#: .\templates\dashboard_app\notifications.html:50
+msgid "Таймаут соединения (сек)"
+msgstr "Connection timeout (sec)"
+
+#: .\templates\dashboard_app\notifications.html:55
+msgid "Защита соединения"
+msgstr "Connection security"
+
+#: .\templates\dashboard_app\notifications.html:57
+msgid "Нет"
+msgstr "None"
+
+#: .\templates\dashboard_app\notifications.html:58
+msgid "SSL/TLS"
+msgstr "SSL/TLS"
+
+#: .\templates\dashboard_app\notifications.html:59
+msgid "STARTTLS"
+msgstr "STARTTLS"
+
+#: .\templates\dashboard_app\notifications.html:64
+msgid "Получатели"
+msgstr "Receivers"
+
+#: .\templates\dashboard_app\notifications.html:72
+#: .\templates\dashboard_app\notifications.html:86
+#: .\templates\dashboard_app\notifications.html:177
+#: .\templates\dashboard_app\notifications.html:383
+msgid "Email получателя"
+msgstr "Receiver Email"
+
+#: .\templates\dashboard_app\notifications.html:77
+msgid "Удалить получателя"
+msgstr "Delete username"
+
+#: .\templates\dashboard_app\notifications.html:93
+msgid "Добавить получателя"
+msgstr "Add username"
+
+#: .\templates\dashboard_app\notifications.html:101
+#: .\templates\dashboard_app\notifications.html:151
+msgid "Отправить тестовое сообщение"
+msgstr "Send test message"
+
+#: .\templates\dashboard_app\notifications.html:108
+#: .\templates\dashboard_app\notifications.html:158
+msgid "Сбросить"
+msgstr "Reset"
+
+#: .\templates\dashboard_app\notifications.html:109
+msgid "Сохранить Email"
+msgstr "Save"
+
+#: .\templates\dashboard_app\notifications.html:123
+msgid "Telegram"
+msgstr "Telegram"
+
+#: .\templates\dashboard_app\notifications.html:134
+msgid "API Токен Telegram"
+msgstr "Telegram API token"
+
+#: .\templates\dashboard_app\notifications.html:138
+msgid "Chat ID для уведомлений"
+msgstr "Chat ID for notifications"
+
+#: .\templates\dashboard_app\notifications.html:144
+msgid "Ваш Chat ID"
+msgstr "Your Chat ID"
+
+#: .\templates\dashboard_app\notifications.html:159
+msgid "Сохранить Telegram"
+msgstr "Save"
+
+#: .\templates\dashboard_app\notifications.html:173
+msgid "Тестовое сообщение Email"
+msgstr "Email test message"
+
+#: .\templates\dashboard_app\notifications.html:181
+#: .\templates\dashboard_app\notifications.html:201
+msgid "Отменить"
+msgstr "Cancel"
+
+#: .\templates\dashboard_app\notifications.html:182
+#: .\templates\dashboard_app\notifications.html:202
+msgid "Отправить"
+msgstr "Send"
+
+#: .\templates\dashboard_app\notifications.html:193
+msgid "Тестовое сообщение Telegram"
+msgstr "Telegram test message"
+
+#: .\templates\dashboard_app\notifications.html:197
+msgid "Chat ID"
+msgstr "Chat ID"
+
+#: .\templates\dashboard_app\notifications.html:259
+msgid "Успех"
+msgstr "Success"
+
+#: .\templates\dashboard_app\notifications.html:262
+msgid "Ошибка"
+msgstr "Error"
+
+#: .\templates\dashboard_app\notifications.html:296
+msgid "Сначала включите Email-уведомления"
+msgstr "Enable Email notifications first"
+
+#: .\templates\dashboard_app\notifications.html:305
+msgid "Укажите email получателя"
+msgstr "Enter Email receivers"
+
+#: .\templates\dashboard_app\notifications.html:318
+#: .\templates\dashboard_app\notifications.html:355
+msgid "Тестовое сообщение отправлено"
+msgstr "Test message sent"
+
+#: .\templates\dashboard_app\notifications.html:323
+#: .\templates\dashboard_app\notifications.html:360
+msgid "Не удалось отправить тестовое сообщение. Код ошибки:"
+msgstr "Failed to send test message. Error code:"
+
+#: .\templates\dashboard_app\notifications.html:333
+msgid "Сначала включите Telegram-уведомления"
+msgstr "Enable Telegram notifications first"
+
+#: .\templates\dashboard_app\notifications.html:342
+msgid "Укажите Chat ID"
+msgstr "Enter Chat ID"
+
+#: .\templates\dashboard_app\service_confirm_delete.html:3
+#: .\templates\dashboard_app\service_confirm_delete.html:6
+msgid "Удалить сервис"
+msgstr "Delete service"
+
+#: .\templates\dashboard_app\service_confirm_delete.html:7
+#, python-format
+msgid "Вы уверены, что хотите удалить сервис \"%(object.name)s\"?"
+msgstr "Are you sure you want to delete \"%(object.name)s\" service"
+
+#: .\templates\dashboard_app\service_confirm_delete.html:10
+#: .\templates\dashboard_app\services.html:25
+msgid "Удалить"
+msgstr "Delete"
+
+#: .\templates\dashboard_app\service_confirm_delete.html:11
+#: .\templates\dashboard_app\service_form.html:49
+msgid "Отмена"
+msgstr "Cancel"
+
+#: .\templates\dashboard_app\service_form.html:4
+msgid "Форма сервиса"
+msgstr "Service form"
+
+#: .\templates\dashboard_app\service_form.html:7
+msgid "Сервис"
+msgstr "Service"
+
+#: .\templates\dashboard_app\service_form.html:48
+msgid "Сохранить"
+msgstr "Save"
+
+#: .\templates\dashboard_app\services.html:16
+msgid "Фильтр"
+msgstr "Filter"
+
+#: .\templates\dashboard_app\services.html:18
+msgid "Добавить"
+msgstr "Add"
+
+#: .\templates\dashboard_app\services.html:19
+#: .\templates\dashboard_app\system.html:26
+msgid "Обновить"
+msgstr "Update"
+
+#: .\templates\dashboard_app\services.html:61
+msgid "OK"
+msgstr "UP"
+
+#: .\templates\dashboard_app\services.html:63
+msgid "DOWN"
+msgstr "DOWN"
+
+#: .\templates\dashboard_app\services.html:69
+msgid "Нет доступных сервисов"
+msgstr "No available services"
+
+#: .\templates\dashboard_app\services.html:103
+msgid "Удалить выбранные?"
+msgstr "Delete chosen?"
+
+#: .\templates\dashboard_app\system.html:32
+msgid "Имя сервиса"
+msgstr "Service name"
+
+#: .\templates\dashboard_app\system.html:34
+msgid "IP"
+msgstr "IP"
+
+#: .\templates\dashboard_app\system.html:35
+msgid "Port"
+msgstr "Port"
+
+#: .\templates\dashboard_app\system.html:57
+msgid "Не найдено ни одного сервиса"
+msgstr "Services not found"

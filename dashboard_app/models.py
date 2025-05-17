@@ -5,11 +5,6 @@ class Service(models.Model):
     hostname  = models.CharField(max_length=100, verbose_name="Hostname")
     address   = models.GenericIPAddressField(verbose_name="Адрес")
     port      = models.PositiveIntegerField(verbose_name="Порт")
-    # новый функционал
-    enable_monitoring = models.BooleanField(
-        default=False,
-        verbose_name="Установить мониторинг"
-    )
     PROTO_CHOICES = [
     ('tcp', 'TCP'),
     ('http', 'HTTP'),]
@@ -19,19 +14,6 @@ class Service(models.Model):
         default = 'tcp',
         help_text = "Метод проверки: TCP-коннект или HTTP-запрос"
        )
-    ROLE_CHOICES = [
-        ('mongodb',    'MongoDB'),
-        ('mysql',      'MySQL'),
-        ('postgresql', 'PostgreSQL'),
-        ('common',     'Common'),
-    ]
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default='common',
-        verbose_name='Роль',
-        blank=True,
-    )
 
     last_is_up = models.BooleanField(
         null=True,

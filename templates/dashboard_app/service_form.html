@@ -44,37 +44,10 @@
       {{ form.protocol.errors }}
     </div>
 
-    <!-- Новый чекбокс: мониторинг -->
-    <div class="form-check mb-3">
-      {{ form.enable_monitoring }}
-      {{ form.enable_monitoring.label_tag }}
-      {{ form.enable_monitoring.errors }}
-    </div>
-
-    <!-- Выпадающий список ролей, показывается только при мониторинге -->
-    <div class="mb-3" id="role-field" style="display: none;">
-      {{ form.role.label_tag }}
-      {{ form.role }}
-      {{ form.role.errors }}
-    </div>
 
     <button type="submit" class="btn btn-siem">{% trans "Сохранить" %}</button>
     <a href="{% url 'services' %}" class="btn btn-outline-secondary ms-2">{% trans "Отмена" %}</a>
   </form>
 </div>
 
-<script>
-  // показываем/скрываем select роли по чекбоксу
-  document.addEventListener('DOMContentLoaded', () => {
-    const chk = document.getElementById('id_enable_monitoring');
-    const roleDiv = document.getElementById('role-field');
-    function toggleRole() {
-      roleDiv.style.display = chk.checked ? '' : 'none';
-    }
-    if (chk) {
-      chk.addEventListener('change', toggleRole);
-      toggleRole();
-    }
-  });
-</script>
 {% endblock %}

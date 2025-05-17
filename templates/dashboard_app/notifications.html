@@ -7,13 +7,6 @@
 
 {% block content %}
 <div class="container-fluid p-4">
-  {% if messages %}
-    <div class="mb-3">
-      {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-      {% endfor %}
-    </div>
-  {% endif %}
 
   {% include 'dashboard_app/_system_nav.html' with active='notifications' %}
   <h4 class="mb-4">{% trans "Уведомления" %}</h4>
@@ -113,7 +106,7 @@
                       name="reset_email"
                       class="btn btn-reset">
                 {% trans "Сбросить" %}</button>
-              <button type="submit" class="btn btn-primary">{% trans "Сохранить Email" %}</button>
+              <button type="submit" name="save_email" class="btn btn-primary">{% trans "Сохранить Email" %}</button>
             </div>
           </div>
         </div>
@@ -163,7 +156,7 @@
                       name="reset_telegram"
                       class="btn btn-reset">
                 {% trans "Сбросить" %}</button>
-              <button type="submit" class="btn btn-primary">{% trans "Сохранить Telegram" %}</button>
+              <button type="submit" name="save_telegram" class="btn btn-primary">{% trans "Сохранить Telegram" %}</button>
             </div>
           </div>
         </div>
@@ -171,22 +164,147 @@
     </div>
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- Modal для теста Email -->
+<div class="modal fade" id="emailTestModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="email-test-form" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Тестовое сообщение Email" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Закрыть' %}"></button>
+      </div>
+      <div class="modal-body">
+        <label for="email-test-address" class="form-label">{% trans "Email получателя" %}</label>
+        <input type="email" id="email-test-address" class="form-control" required>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Отменить" %}</button>
+        <button type="submit" class="btn btn-primary">{% trans "Отправить" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal для теста Telegram -->
+<div class="modal fade" id="telegramTestModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="telegram-test-form" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Тестовое сообщение Telegram" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Закрыть' %}"></button>
+      </div>
+      <div class="modal-body">
+        <label for="telegram-test-chatid" class="form-label">{% trans "Chat ID" %}</label>
+        <input type="text" id="telegram-test-chatid" class="form-control" required>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Отменить" %}</button>
+        <button type="submit" class="btn btn-primary">{% trans "Отправить" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Контейнер для Bootstrap-тоста -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+  <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto" id="notificationToastHeader"></strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="{% trans 'Закрыть' %}"></button>
+    </div>
+    <div class="toast-body" id="notificationToastBody"></div>
+  </div>
+</div>
+{% if messages %}
+<script>
+  window.djangoMessages = [
+    {% for message in messages %}
+      {
+        level: '{{ message.tags }}',
+        text: '{{ message|escapejs }}'
+      }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+</script>
+{% else %}
+<script>window.djangoMessages = [];</script>
+{% endif %}
+
 <script>
 (function() {
-  // CSRF-токен из куки
+  // 1) CSRF из куки
   function getCookie(name) {
     const v = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');
     return v ? v.pop() : '';
   }
   const csrftoken = getCookie('csrftoken');
 
-  // Обработчики тестовых кнопок
-  document.getElementById('email-test').addEventListener('click', async () => {
-    const to = prompt("{% trans 'Введите email для тестового сообщения' %}");
-    if (!to) return;
+  // 2) Toast setup
+  const toastEl   = document.getElementById('notificationToast');
+  const toast     = new bootstrap.Toast(toastEl, { delay: 5000, autohide: true });
+  const hdr       = document.getElementById('notificationToastHeader');
+  const body      = document.getElementById('notificationToastBody');
+
+  // Время последнего показа
+  let lastShow = 0;
+
+  function showToast(msg, type) {
+    // помечаем момент показа
+    lastShow = Date.now();
+
+    // переключаем цвет и заголовок
+    toastEl.classList.remove('bg-success','bg-danger','text-white');
+    if (type === 'success') {
+      toastEl.classList.add('bg-success','text-white');
+      hdr.textContent = "{% trans 'Успех' %}";
+    } else {
+      toastEl.classList.add('bg-danger','text-white');
+      hdr.textContent = "{% trans 'Ошибка' %}";
+    }
+    body.textContent = msg;
+    toast.show();
+  }
+
+  if (window.djangoMessages && Array.isArray(window.djangoMessages)) {
+    window.djangoMessages.forEach(msg => {
+      // уровень может быть 'success', 'error', 'warning', 'info'
+      const type = msg.level.includes('success') ? 'success'
+                 : msg.level.includes('error')   ? 'error'
+                 : 'info';
+      showToast(msg.text, type);
+    });
+  }
+
+  // 3) Постоянный слушатель клика вне toasta
+  document.addEventListener('click', e => {
+    // если toasta сейчас нет или он ещё не показан — выходим
+    if (!toastEl.classList.contains('show')) return;
+    // игнорируем первый клик (который часто вызвал showToast)
+    if (Date.now() - lastShow < 100) return;
+    // если клик вне toasta — скрываем
+    if (!toastEl.contains(e.target)) {
+      toast.hide();
+    }
+  });
+
+  // 4) Email-тест
+  const emailTestBtn   = document.getElementById('email-test');
+  const emailTestModal = new bootstrap.Modal(document.getElementById('emailTestModal'));
+
+  emailTestBtn.addEventListener('click', () => {
+    if (!document.getElementById('email_enabled').checked) {
+      return showToast("{% trans 'Сначала включите Email-уведомления' %}", 'error');
+    }
+    emailTestModal.show();
+  });
+
+  document.getElementById('email-test-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const to = document.getElementById('email-test-address').value.trim();
+    if (!to) {
+      return showToast("{% trans 'Укажите email получателя' %}", 'error');
+    }
+    emailTestModal.hide();
     try {
       const resp = await fetch("{% url 'system-notifications-test' %}", {
         method: 'POST',
@@ -196,19 +314,34 @@
         },
         body: JSON.stringify({ channel: 'email', to })
       });
-      if (resp.ok) alert("{% trans 'Тестовое сообщение отправлено' %}");
-      else throw new Error(resp.status);
-    } catch (e) {
-      alert("{% trans 'Не удалось отправить тестовое сообщение:' %} " + e);
+      if (resp.ok) {
+        showToast("{% trans 'Тестовое сообщение отправлено' %}", 'success');
+      } else {
+        throw new Error(resp.status);
+      }
+    } catch (err) {
+      showToast("{% trans 'Не удалось отправить тестовое сообщение. Код ошибки:' %} " + err, 'error');
     }
   });
 
-  document.getElementById('telegram-test').addEventListener('click', async () => {
-    let to = document.getElementById('telegram-chat-id').value.trim();
-    if (!to) {
-      to = prompt("{% trans 'Введите Chat ID для тестового сообщения' %}");
+  // 5) Telegram-тест
+  const telegramTestBtn   = document.getElementById('telegram-test');
+  const telegramTestModal = new bootstrap.Modal(document.getElementById('telegramTestModal'));
+
+  telegramTestBtn.addEventListener('click', () => {
+    if (!document.getElementById('telegram_enabled').checked) {
+      return showToast("{% trans 'Сначала включите Telegram-уведомления' %}", 'error');
     }
-    if (!to) return;
+    telegramTestModal.show();
+  });
+
+  document.getElementById('telegram-test-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const to = document.getElementById('telegram-test-chatid').value.trim();
+    if (!to) {
+      return showToast("{% trans 'Укажите Chat ID' %}", 'error');
+    }
+    telegramTestModal.hide();
     try {
       const resp = await fetch("{% url 'system-notifications-test' %}", {
         method: 'POST',
@@ -218,14 +351,19 @@
         },
         body: JSON.stringify({ channel: 'telegram', to })
       });
-      if (resp.ok) alert("{% trans 'Тестовое сообщение отправлено' %}");
-      else throw new Error(resp.status);
-    } catch (e) {
-      alert("{% trans 'Не удалось отправить тестовое сообщение:' %} " + e);
+      if (resp.ok) {
+        showToast("{% trans 'Тестовое сообщение отправлено' %}", 'success');
+      } else {
+        throw new Error(resp.status);
+      }
+    } catch (err) {
+      showToast("{% trans 'Не удалось отправить тестовое сообщение. Код ошибки:' %} " + err, 'error');
     }
   });
+
 })();
 </script>
+
 <script>
   console.log("🔔 Recipients script loaded");
 

@@ -1,10 +1,109 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
+{% block title %}{% trans "О системе" %}{% endblock %}
+
 {% block content %}
 <div class="container-fluid p-4">
   {% include 'dashboard_app/_system_nav.html' with active='about' %}
-  <h4>{% trans "О системе" %}</h4>
-  <p>{% trans "Информация о версии, авторах, лицензии и т.д." %}</p>
+
+  <h4 class="mb-4">{% trans "О системе" %}</h4>
+
+  <dl class="row">
+    <dt class="col-sm-3">{% trans "Название" %}</dt>
+    <dd class="col-sm-9">{{ system_info.app_name }}</dd>
+
+    <dt class="col-sm-3">{% trans "Версия" %}</dt>
+    <dd class="col-sm-9">
+      {{ system_info.version }}&nbsp;(&nbsp;{{ system_info.build_date }}&nbsp;)
+    </dd>
+
+    <dt class="col-sm-3">{% trans "Авторы" %}</dt>
+    <dd class="col-sm-9">
+      <ul class="list-unstyled mb-0">
+        {% for author in system_info.authors %}
+          <li>{{ author.name }} &lt;{{ author.email }}&gt;</li>
+        {% endfor %}
+      </ul>
+    </dd>
+
+    <dt class="col-sm-3">{% trans "Лицензия" %}</dt>
+    <dd class="col-sm-9">MIT</dd>
+
+    <dt class="col-sm-3">{% trans "Репозиторий" %}</dt>
+    <dd class="col-sm-9">
+      <a href="{{ system_info.repo_url }}" target="_blank">{{ system_info.repo_url }}</a>
+    </dd>
+
+  </dl>
+
+  <hr>
+
+  <style>
+    .license-block pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: .25rem;
+      max-height: 350px;
+      overflow: auto;
+      font-size: .9rem;
+    }
+  </style>
+
+  <div class="license-block">
+    <h5 class="mt-4">{% trans "Текст лицензии (английский)" %}</h5>
+    <pre>
+MIT License
+
+Copyright (c) 2025 Stepan Zatinchshikov, step.zat@gmail.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the “Software”), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+    </pre>
+
+    <h5 class="mt-4">{% trans "Текст лицензии (русский)" %}</h5>
+    <pre>
+Лицензия MIT
+
+Copyright © 2025 Затинщиков Степан, step.zat@gmail.com
+
+Настоящим разрешается любому лицу, получившему копию данного программного
+обеспечения и сопутствующей документации (далее «Программное обеспечение»),
+безвозмездно пользоваться Программным обеспечением без ограничений, включая
+неограниченные права на использование, копирование, изменение, слияние,
+публикацию, распространение, сублицензирование и/или продажу копий Программного
+обеспечения, а также лицам, которым предоставляется Программное обеспечение,
+предоставлять им такие же права, при соблюдении следующих условий:
+
+Вышеуказанное уведомление об авторских правах и данное разрешение должны быть
+включены во все копии или значительные части Программного обеспечения.
+
+ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ ПРЕДОСТАВЛЯЕТСЯ «КАК ЕСТЬ», БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ,
+ВЫРАЗНЫХ ИЛИ ПОДРАЗУМЕВАЕМЫХ, ВКЛЮЧАЯ, НО НЕ ОГРАНИЧИВАЯСЬ ГАРАНТИЯМИ ТОВАРНОЙ
+ПРИГОДНОСТИ, ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЁННОЙ ЦЕЛИ И НЕНАРУШЕНИЯ ПРАВ. НИ В КОЕМ
+СЛУЧАЕ АВТОРЫ ИЛИ ДЕРЖАТЕЛИ АВТОРСКИХ ПРАВ НЕ МОГУТ НЕСТИ ОТВЕТСТВЕННОСТЬ ПО
+ИСКАМ, УБЫТКАМ ИЛИ ИНЫМ ТРЕБОВАНИЯМ, ЛИБО В РАМКАХ ДОГОВОРА, ЛИБО В РЕЗУЛЬТАТЕ
+ДЕЛИКТА ИЛИ ИНЫХ ОБСТОЯТЕЛЬСТВ, ВОЗНИКШИМ ИЗ КАКИХ-ЛИБО ДЕЙСТВИЙ С ПРОГРАММНЫМ
+ОБЕСПЕЧЕНИЕМ ИЛИ ИНЫХ ДЕЙСТВИЙ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ.
+    </pre>
+  </div>
+
 </div>
 {% endblock %}

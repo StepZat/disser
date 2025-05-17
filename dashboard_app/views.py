@@ -240,17 +240,26 @@ class SystemView(TemplateView):
         ctx['services'] = services
         return ctx
 
+CACHE_KEY = "notif_props"
+
+
 class NotificationsView(TemplateView):
     template_name = 'dashboard_app/notifications.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        try:
-            props = load_props()
-        except Exception:
-            props = {}
 
-        # fill in all fields, including enabled flags
+        # 1) Пытаемся из кэша
+        props = cache.get(CACHE_KEY)
+        if props is None:
+            # 1a) нет — грузим из микросервиса и пишем в кэш
+            try:
+                props = load_props()
+            except Exception:
+                props = {}
+            cache.set(CACHE_KEY, props, None)
+
+        # 2) Прокидываем в контекст
         for key in KEYS_EMAIL + KEYS_TG:
             ctx[key] = props.get(key, "")
         ctx["email_enabled"]    = props.get("email_enabled", "false")
@@ -260,79 +269,139 @@ class NotificationsView(TemplateView):
         return ctx
 
     def post(self, request, *args, **kwargs):
-        form = request.POST.get("form_type")
         session = requests.Session()
         session.trust_env = False
+
+        # 1) Сброс Email
+        if "reset_email" in request.POST:
+            email_keys = ["email_enabled"] + KEYS_EMAIL + ["email_recipients"]
+            errors = []
+            for key in email_keys:
+                resp = session.delete(f"{MS_BASE}/properties/{key}/", timeout=5)
+                if resp.status_code not in (204, 404):
+                    errors.append(key)
+            # чистим только Email-поля из кэша
+            props = cache.get(CACHE_KEY, {}) or {}
+            for key in email_keys:
+                props.pop(key, None)
+            cache.set(CACHE_KEY, props, None)
+
+            if errors:
+                messages.error(request, _("Ошибка сброса Email: ") + ", ".join(errors))
+            else:
+                messages.success(request, _("Настройки Email сброшены"))
+            return redirect('system-notifications')
+
+        # 2) Сброс Telegram
+        if "reset_telegram" in request.POST:
+            tg_keys = ["telegram_enabled", "telegram_token", "telegram_chat_id"]
+            errors = []
+            for key in tg_keys:
+                resp = session.delete(f"{MS_BASE}/properties/{key}/", timeout=5)
+                if resp.status_code not in (204, 404):
+                    errors.append(key)
+            props = cache.get(CACHE_KEY, {}) or {}
+            for key in tg_keys:
+                props.pop(key, None)
+            cache.set(CACHE_KEY, props, None)
+
+            if errors:
+                messages.error(request, _("Ошибка сброса Telegram: ") + ", ".join(errors))
+            else:
+                messages.success(request, _("Настройки Telegram сброшены"))
+            return redirect('system-notifications')
+
+        # 3) Сохранение Email или Telegram
+        form_type = request.POST.get("form_type")
         errors = []
 
-        if form == "email":
-            # --- Email block ---
+        # 3a) Email
+        if form_type == "email":
+            # флаг включения
             enabled = "true" if request.POST.get("email_enabled") == "on" else "false"
             resp = session.patch(f"{MS_BASE}/properties/email_enabled/", json={"value": enabled}, timeout=5)
             if resp.status_code == 404:
-                resp = session.post(f"{MS_BASE}/properties/", json={"key":"email_enabled","value":enabled}, timeout=5)
+                resp = session.post(f"{MS_BASE}/properties/",
+                                    json={"key":"email_enabled","value":enabled}, timeout=5)
             if not resp.ok:
                 errors.append("email_enabled")
 
+            # SMTP-поля
             for key in KEYS_EMAIL:
                 val = request.POST.get(key, "")
                 resp = session.patch(f"{MS_BASE}/properties/{key}/", json={"value": val}, timeout=5)
                 if resp.status_code == 404:
-                    resp = session.post(f"{MS_BASE}/properties/", json={"key":key,"value":val}, timeout=5)
-                if not errors:
-                    from django.core.cache import cache
-                    cache.delete("notif_props")
+                    resp = session.post(f"{MS_BASE}/properties/",
+                                        json={"key":key,"value":val}, timeout=5)
+                if not resp.ok:
+                    errors.append(key)
 
+            # получатели
             recips = request.POST.getlist("email_recipients[]")
-            recips_val = ",".join([r for r in recips if r])
-            resp = session.patch(f"{MS_BASE}/properties/email_recipients/", json={"value": recips_val}, timeout=2)
+            recips_val = ",".join(r for r in recips if r)
+            resp = session.patch(f"{MS_BASE}/properties/email_recipients/", json={"value": recips_val}, timeout=5)
             if resp.status_code == 404:
-                resp = session.post(f"{MS_BASE}/properties/", json={"key": "email_recipients", "value": recips_val},
-                                    timeout=2)
-            if not resp.ok: errors.append("email_recipients")
-            if errors:
-                messages.error(request, _("Ошибка сохранения Email: ") + ", ".join(errors))
-            else:
-                messages.success(request, _("Параметры Email успешно сохранены"))
+                resp = session.post(f"{MS_BASE}/properties/",
+                                    json={"key":"email_recipients","value":recips_val}, timeout=5)
+            if not resp.ok:
+                errors.append("email_recipients")
 
-        elif form == "telegram":
-            # --- Telegram block ---
+            if not errors:
+                # обновляем только Email-поля в кэше
+                props = cache.get(CACHE_KEY, {}) or {}
+                props.update({
+                    "email_enabled": enabled,
+                    **{k: request.POST.get(k, "") for k in KEYS_EMAIL},
+                    "email_recipients": recips_val,
+                })
+                cache.set(CACHE_KEY, props, None)
+                messages.success(request, _("Параметры Email успешно сохранены"))
+            else:
+                messages.error(request, _("Ошибка сохранения Email: ") + ", ".join(errors))
+
+        # 3b) Telegram
+        elif form_type == "telegram":
             enabled = "true" if request.POST.get("telegram_enabled") == "on" else "false"
             resp = session.patch(f"{MS_BASE}/properties/telegram_enabled/", json={"value": enabled}, timeout=5)
             if resp.status_code == 404:
-                resp = session.post(f"{MS_BASE}/properties/", json={"key":"telegram_enabled","value":enabled}, timeout=5)
+                resp = session.post(f"{MS_BASE}/properties/",
+                                    json={"key":"telegram_enabled","value":enabled}, timeout=5)
             if not resp.ok:
                 errors.append("telegram_enabled")
 
             token = request.POST.get("telegram_token", "")
             resp = session.patch(f"{MS_BASE}/properties/telegram_token/", json={"value": token}, timeout=5)
             if resp.status_code == 404:
-                resp = session.post(f"{MS_BASE}/properties/", json={"key":"telegram_token","value":token}, timeout=5)
+                resp = session.post(f"{MS_BASE}/properties/",
+                                    json={"key":"telegram_token","value":token}, timeout=5)
             if not resp.ok:
                 errors.append("telegram_token")
 
-            key = "telegram_chat_id"
-            chat_id = request.POST.get(key, "")
-            url = f"{MS_BASE}/properties/{key}/"
-            print(f"→ PATCH {url} payload={{'value': {chat_id!r}}}")
-            resp = session.patch(url, json={"value": chat_id}, timeout=5)
-            print(f"← {resp.status_code} {resp.text}")
+            chat_id = request.POST.get("telegram_chat_id", "")
+            resp = session.patch(f"{MS_BASE}/properties/telegram_chat_id/", json={"value": chat_id}, timeout=5)
             if resp.status_code in (404, 405):
-                post_url = f"{MS_BASE}/properties/"
-                print(f"→ POST {post_url} payload={{'key': {key!r}, 'value': {chat_id!r}}}")
-                resp = session.post(post_url, json={"key": key, "value": chat_id}, timeout=5)
-                print(f"← {resp.status_code} {resp.text}")
+                resp = session.post(f"{MS_BASE}/properties/",
+                                    json={"key":"telegram_chat_id","value":chat_id}, timeout=5)
             if not resp.ok:
-                errors.append(key)
+                errors.append("telegram_chat_id")
 
-            if errors:
-                messages.error(request, _("Ошибка сохранения Telegram: ") + ", ".join(errors))
-            else:
+            if not errors:
+                props = cache.get(CACHE_KEY, {}) or {}
+                props.update({
+                    "telegram_enabled": enabled,
+                    "telegram_token":   token,
+                    "telegram_chat_id": chat_id,
+                })
+                cache.set(CACHE_KEY, props, None)
                 messages.success(request, _("Параметры Telegram успешно сохранены"))
+            else:
+                messages.error(request, _("Ошибка сохранения Telegram: ") + ", ".join(errors))
+
         else:
             messages.error(request, _("Неизвестная форма уведомлений"))
 
         return redirect('system-notifications')
+
 
 class HostListView(TemplateView):
     template_name = 'dashboard_app/hosts.html'
@@ -428,6 +497,24 @@ class HostListView(TemplateView):
 
 class AboutView(TemplateView):
     template_name = 'dashboard_app/about.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        # существующий код по services, hosts и т.п.
+        # ...
+
+        # ——— Блок «О системе» ———
+        ctx['system_info'] = {
+            'app_name': settings.APP_NAME,
+            'version': settings.APP_VERSION,
+            'build_date': settings.APP_BUILD_DATE,
+            'authors': settings.APP_AUTHORS,
+            'license': settings.APP_LICENSE,
+            'repo_url': settings.APP_REPO_URL,
+        }
+
+        return ctx
 
 @csrf_exempt
 def notifications_test(request):
